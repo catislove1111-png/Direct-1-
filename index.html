@@ -107,11 +107,15 @@ function renderChat(){
 
 // ========= DM 보내기 =========
 function sendMsg(){
-  const input = document.getElementById('msgInput');
-  const text = input.value.trim();
+  let input = document.getElementById("msgInput");
+  let text = input.value.trim();
   if(!text) return;
-  chatData.push({text,type:'me',time:Date.now()}); saveChat(); renderChat();
-  input.value=''; typing=true; setTimeout(()=>{ reply(text); typing=false; },1000);
+
+  save(text,"me");
+  input.value = "";
+
+  updateReadStatus();  // 읽음 표시
+  replyWithDelay(text); // 랜덤 텀 답장
 }
 
 // ========= AI 답장 생성 =========
@@ -128,16 +132,44 @@ function generateReply(userMsg){
   if(userMsg.length<3) return ['ㄴㅇㅁ','니애미야','느그 ㅋㅋ'][Math.floor(Math.random()*3)];
   return ['ㅇㅇ','ㄴ','왜','ㅋㅋ'][Math.floor(Math.random()*4)];
 }
+ function replyWithDelay(userMsg){
+    const minMs = 60*1000;       // 최소 1분
+    const maxMs = 2*60*60*1000;  // 최대 2시간
+    const delay = Math.random()*(maxMs - minMs) + minMs;
+
+    setTimeout(()=> {
+      const botMsg = generateReply(userMsg);
+      save(botMsg, "ai");
+      updateReadStatus();
+    }, delay);
+  }
 
 // ========= 공부 독촉 AI =========
+  document.addEventListener("DOMContentLoaded", () => {
+  load();          // 기존 채팅/플래너 초기화
+  studyReminder(); // 독촉 시작
+});
 function studyReminder(){
-  if(typing) { setTimeout(studyReminder,5000); return; }
-  const msgs=['공부좀햇냐','오늘 얼마나함','너 공부안하면 연락안함','ㅗ','연락 ㄴ'];
+  const todayTasks = tasksData[todayStr] || [];
+  const total = todayTasks.length;
+  const completed = todayTasks.filter(t => t.completed).length;
+
+  if(total === 0) return; // 오늘 할 일 없으면 종료
+  if(completed >= Math.ceil(total/2)) return; // 반 이상 완료하면 종료
+
+  // 반 이상 완료 안 되면 랜덤 독촉 메시지
+  const msgs = ['공부좀햇냐','오늘 얼마나함','너 공부안하면 연락안함','ㅗ','연락 ㄴ','나랑 결혼한다매 그럼 공부 잘해야지','너 고3아니냐 어케 나보다 공부를 덜함','니 지방대갈거냐','수의대간다매 공부를 왤케안해','니 공부 안하면 정떨임','할거 다 할때까지 연락 ㄴ'];
   const msg = msgs[Math.floor(Math.random()*msgs.length)];
-  chatData.push({text:msg,type:'ai',time:Date.now()}); saveChat(); renderChat();
-  setTimeout(studyReminder, (Math.random()*10+5)*1000);
+  save(msg, 'ai');
+  updateReadStatus();
+
+  // 다음 독촉 랜덤 시간: 1시간17분 ~ 3시간 (ms)
+  const minMs = 77*60*1000;  // 1시간 17분
+  const maxMs = 3*60*60*1000; // 3시간
+  const delay = Math.random()*(maxMs - minMs) + minMs;
+
+  setTimeout(studyReminder, delay);
 }
-studyReminder();
 
 // ========= 플래너 렌더 =========
 function renderDailyTask(){
