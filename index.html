@@ -299,6 +299,152 @@ let tasksData = JSON.parse(localStorage.getItem('tasksData')||'[]');
 const taskContainer = document.getElementById('taskContainer');
 const addTaskBtn = document.getElementById('addTaskBtn');
 
+  const taskContainer = document.getElementById('taskContainer');
+const addTaskBtn = document.getElementById('addTaskBtn'); // 반드시 id로 잡아야 함
+
+addTaskBtn.addEventListener('click', ()=>{
+    const box = document.createElement('div');
+    box.className='taskBox';
+    const date = new Date().toLocaleDateString();
+
+    box.innerHTML = `
+        <div class="taskDate">${date}</div>
+        <div class="line" style="height:1px;background:#FFCBD9;margin:4px 0;"></div>
+        <div class="sectorContainer"></div>
+        <div style="margin-top:6px;">
+            <button class="addSectorBtn">+ 섹터 추가</button>
+        </div>
+    `;
+
+    // 섹터 추가 버튼 이벤트
+    const addSectorBtn = box.querySelector('.addSectorBtn');
+    addSectorBtn.addEventListener('click', ()=>{
+        showSectorMenu(box.querySelector('.sectorContainer'), date);
+    });
+
+    taskContainer.appendChild(box);
+});
+
+// 섹터 선택 메뉴
+function showSectorMenu(container, date){
+    const menu = document.createElement('div');
+    menu.style.border='1px solid #FFCBD9';
+    menu.style.borderRadius='8px';
+    menu.style.background='#fff';
+    menu.style.padding='8px';
+    menu.style.display='flex';
+    menu.style.gap='6px';
+    menu.style.marginTop='4px';
+
+    ['영상 시청','개념 정리','문풀'].forEach(type=>{
+        const btn = document.createElement('button');
+        btn.innerText = type;
+        btn.style.border='1px solid #FFCBD9';
+        btn.style.borderRadius='8px';
+        btn.style.background='#fff';
+        btn.style.color='#FFCBD9';
+        btn.style.fontWeight='700';
+        btn.style.padding='4px 6px';
+
+        btn.addEventListener('click', ()=>{
+            const sector = createSectorBox(type);
+            container.appendChild(sector);
+
+            // 로컬스토리지 저장
+            let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
+            if(!tasksData[date]) tasksData[date]=[];
+            tasksData[date].push({type,data:{}});
+            localStorage.setItem('tasksData',JSON.stringify(tasksData));
+
+            menu.remove();
+        });
+
+        menu.appendChild(btn);
+    });
+
+    container.appendChild(menu);
+}
+
+// 섹터 박스 생성
+function createSectorBox(type){
+    const box = document.createElement('div');
+    box.className='sector';
+    box.style.border='1px solid #FFCBD9';
+    box.style.borderRadius='12px';
+    box.style.padding='8px';
+    box.style.marginTop='4px';
+
+    const header = document.createElement('div');
+    header.style.display='flex';
+    header.style.justifyContent='space-between';
+    header.style.alignItems='center';
+
+    const title = document.createElement('div');
+    title.innerText = type;
+    title.style.fontWeight='700';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.innerText='x';
+    removeBtn.style.border='none';
+    removeBtn.style.background='none';
+    removeBtn.style.color='#FFCBD9';
+    removeBtn.style.fontWeight='700';
+    removeBtn.style.cursor='pointer';
+    removeBtn.addEventListener('click', ()=>box.remove());
+
+    header.appendChild(title);
+    header.appendChild(removeBtn);
+    box.appendChild(header);
+
+    // 내용
+    const content = document.createElement('div');
+    content.style.marginTop='6px';
+
+    if(type==='영상 시청'){
+        content.innerHTML = `
+            <div style="font-weight:700;">영상 제목</div>
+            <div style="font-size:12px; color:#FFCBD9;">총 길이</div>
+            <input type="number" placeholder="시간" style="width:40px">시간
+            <input type="number" placeholder="분" style="width:40px">분
+            <input type="number" placeholder="초" style="width:40px">초
+            <div class="progress-bar" style="width:100%;height:8px;border:1px solid #FFCBD9;border-radius:4px;margin-top:4px;position:relative;">
+                <div class="progress-fill" style="height:100%;background:#FFCBD9;border-radius:4px 0 0 4px;width:0%;"></div>
+            </div>
+            <span class="heart-btn" style="cursor:pointer;font-size:18px;color:#FFCBD9;font-weight:700;margin-left:8px;">♡</span>
+        `;
+        const heart = content.querySelector('.heart-btn');
+        const progress = content.querySelector('.progress-fill');
+        heart.addEventListener('click', ()=>{
+            progress.style.width='100%';
+            heart.innerText='♥';
+        });
+    }
+
+    if(type==='개념 정리'){
+        content.innerHTML = `<label>완료 체크</label> <input type="checkbox">`;
+    }
+
+    if(type==='문풀'){
+        content.innerHTML = `
+            <label>문제집 이름:</label> <input type="text" placeholder="책 이름"><br>
+            <label>페이지(n1~n2) 또는 문제(n):</label> <input type="text" placeholder="예: 1~20p 또는 30문항">
+            <div class="progress-bar" style="width:100%;height:8px;border:1px solid #FFCBD9;border-radius:4px;margin-top:4px;position:relative;">
+                <div class="progress-fill" style="height:100%;background:#FFCBD9;border-radius:4px 0 0 4px;width:0%;"></div>
+            </div>
+            <span class="heart-btn" style="cursor:pointer;font-size:18px;color:#FFCBD9;font-weight:700;margin-left:8px;">♡</span>
+        `;
+        const heart = content.querySelector('.heart-btn');
+        const progress = content.querySelector('.progress-fill');
+        heart.addEventListener('click', ()=>{
+            progress.style.width='100%';
+            heart.innerText='♥';
+        });
+    }
+
+    box.appendChild(content);
+    return box;
+}
+  
 // ========= 저장 =========
 function saveData(){
   localStorage.setItem('tasksData', JSON.stringify(tasksData));
