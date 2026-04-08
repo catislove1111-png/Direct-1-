@@ -3,20 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DM + Planner 완전판</title>
+<title>DM + Planner</title>
 <style>
-body { margin:0; font-family:-apple-system, sans-serif; background:#fff; }
-
-/* 헤더 */
+body { margin:0; font-family:-apple-system; background:#fff; }
 .header { display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #FFCBD9; }
 .name { font-weight:600; }
-.plus { font-size:24px; color:#FFCBD9; cursor:pointer; padding:4px 8px; }
-
-/* 화면 전환 */
+.plus { font-size:22px; color:#FFCBD9; cursor:pointer; }
 .screen { display:none; }
 .active { display:block; }
-
-/* 채팅 */
 #chat { height:calc(100vh - 110px); overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
 .row { display:flex; margin:4px 0; }
 .row.me { justify-content:flex-end; }
@@ -24,27 +18,25 @@ body { margin:0; font-family:-apple-system, sans-serif; background:#fff; }
 .bubble { max-width:65%; padding:10px 14px; border-radius:18px; font-size:14px; }
 .me .bubble { background:linear-gradient(135deg,#FFCBD9,#FF97B3); color:#fff; }
 .ai .bubble { background:#f1f1f1; }
-
-/* 읽음 표시 */
 .read { font-size:11px; color:#999; margin-top:2px; text-align:right; }
-
-/* 입력 */
 .inputArea { display:flex; padding:8px; border-top:1px solid #eee; }
 #msgInput { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
 .sendBtn { margin-left:6px; padding:0 14px; border:none; border-radius:20px; background:#FFCBD9; color:#fff; cursor:pointer; }
-
-/* 플래너 */
 #plannerContent { padding:20px; }
 #dDay { font-size:32px; font-weight:700; margin-bottom:20px; }
 .addTaskBtn { border:2px solid #FFCBD9; padding:10px; border-radius:12px; color:#FFCBD9; background:#fff; cursor:pointer; }
 .taskBox { border:2px solid #FFCBD9; border-radius:16px; padding:12px; margin-top:12px; }
+.taskDate { font-weight:700; margin-bottom:6px; }
+.line { height:1px; background:#ccc; margin-bottom:8px; }
 .sector { border:1px solid #FFCBD9; border-radius:12px; padding:8px; margin-top:8px; }
+.progressBar { width:100%; height:8px; border:1px solid #FFCBD9; border-radius:4px; margin-top:4px; }
+.progressFill { height:100%; width:0%; background:#FFCBD9; }
 .heart { cursor:pointer; color:#FFCBD9; font-size:18px; }
 </style>
 </head>
 <body>
 
-<!-- DM 화면 -->
+<!-- DM -->
 <div id="dmScreen" class="screen active">
   <div class="header">
     <div class="name">김현준</div>
@@ -52,12 +44,12 @@ body { margin:0; font-family:-apple-system, sans-serif; background:#fff; }
   </div>
   <div id="chat"></div>
   <div class="inputArea">
-    <input id="msgInput" placeholder="메시지...">
+    <input id="msgInput">
     <button class="sendBtn">전송</button>
   </div>
 </div>
 
-<!-- 플래너 화면 -->
+<!-- 플래너 -->
 <div id="plannerScreen" class="screen">
   <div class="header">
     <div id="backBtn">&lt;</div>
@@ -72,7 +64,7 @@ body { margin:0; font-family:-apple-system, sans-serif; background:#fff; }
 </div>
 
 <script>
-// 화면 전환
+/* 화면 전환 */
 const dmScreen = document.getElementById('dmScreen');
 const plannerScreen = document.getElementById('plannerScreen');
 document.getElementById('goPlanner').onclick = ()=>{
@@ -85,18 +77,19 @@ document.getElementById('backBtn').onclick = ()=>{
   dmScreen.classList.add('active');
 };
 
-// D-Day 계산
+/* DDAY */
 function updateDDay(){
   const target = new Date(2026,10,19);
   const now = new Date();
   const diff = Math.ceil((target-now)/(1000*60*60*24));
-  document.getElementById('dDay').innerText = "D-"+diff;
+  document.getElementById('dDay').innerText = "D-" + diff;
 }
 
-// ===== 채팅 =====
+/* ===== 채팅 ===== */
 const chatEl = document.getElementById('chat');
 const input = document.getElementById('msgInput');
 const sendBtn = document.querySelector('.sendBtn');
+
 let chatData = JSON.parse(localStorage.getItem('chat')||'[]');
 let isTyping = false;
 
@@ -104,127 +97,238 @@ function renderChat(){
   chatEl.innerHTML='';
   let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
   chatData.forEach((m,i)=>{
-    let row = document.createElement('div'); row.className='row '+m.type;
-    let bubble=document.createElement('div'); bubble.className='bubble'; bubble.innerText=m.text;
-    row.appendChild(bubble);
+    let row = document.createElement('div');
+    row.className = 'row ' + m.type;
+    let wrap = document.createElement('div');
+    let bubble = document.createElement('div');
+    bubble.className='bubble';
+    bubble.innerText=m.text;
+    wrap.appendChild(bubble);
     if(m.type==='me' && i===lastMeIndex){
       let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
       if(nextAI && !isTyping){
-        let read=document.createElement('div'); read.className='read'; read.innerText='읽음';
-        row.appendChild(read);
+        let read = document.createElement('div');
+        read.className='read';
+        read.innerText='읽음';
+        wrap.appendChild(read);
       }
     }
+    row.appendChild(wrap);
     chatEl.appendChild(row);
   });
   if(isTyping){
-    let row=document.createElement('div'); row.className='row ai';
-    let bubble=document.createElement('div'); bubble.className='bubble'; bubble.innerText='...';
-    row.appendChild(bubble); chatEl.appendChild(row);
+    let row = document.createElement('div');
+    row.className='row ai';
+    let bubble = document.createElement('div');
+    bubble.className='bubble';
+    bubble.innerText='...';
+    row.appendChild(bubble);
+    chatEl.appendChild(row);
   }
   chatEl.scrollTop = chatEl.scrollHeight;
 }
-function save(msg,type){ chatData.push({text:msg,type:type,time:Date.now()}); localStorage.setItem('chat',JSON.stringify(chatData)); renderChat(); }
-function generateReply(){ const arr=['ㅇㅇ','ㅋㅋ','왜','뭐임']; return arr[Math.floor(Math.random()*arr.length)]; }
-function replyFlow(msg){ setTimeout(()=>{ isTyping=true; renderChat(); setTimeout(()=>{ isTyping=false; save(generateReply(msg),'ai'); },5000); }, Math.random()*600000+60000); }
-function sendMsg(){ let text=input.value.trim(); if(!text) return; save(text,'me'); input.value=''; replyFlow(text); }
-sendBtn.onclick = sendMsg;
 
-// ===== 플래너 =====
-let tasksData = JSON.parse(localStorage.getItem('tasksData')||'[]');
+function save(msg,type){
+  chatData.push({text:msg,type:type,time:Date.now()});
+  localStorage.setItem('chat',JSON.stringify(chatData));
+  renderChat();
+}
+
+function generateReply(){
+  const arr=['ㅇㅇ','ㅋㅋ','왜','뭐임'];
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function replyFlow(msg){
+  setTimeout(()=>{
+    isTyping=true;
+    renderChat();
+    setTimeout(()=>{
+      isTyping=false;
+      save(generateReply(msg),'ai');
+    },5000);
+  }, Math.random()*600000+60000);
+}
+
+sendBtn.onclick = ()=>{
+  let text=input.value.trim();
+  if(!text) return;
+  save(text,'me');
+  input.value='';
+  replyFlow(text);
+};
+
+/* ===== 플래너 ===== */
+let tasksData = JSON.parse(localStorage.getItem('tasksData') || '[]');
 const taskContainer = document.getElementById('taskContainer');
 const addTaskBtn = document.querySelector('.addTaskBtn');
-function saveData(){ localStorage.setItem('tasksData', JSON.stringify(tasksData)); }
 
-function render(){
-  taskContainer.innerHTML='';
-  tasksData.forEach((task, taskIndex)=>{
-    const box=document.createElement('div'); box.className='taskBox';
-    box.innerHTML = `
-      <div style="display:flex;justify-content:space-between;">
-        <div style="font-weight:700;">${task.date}</div>
-        <button class="addSectorBtn">＋</button>
-      </div>
-      <div style="height:1px;background:#ccc;margin:8px 0;"></div>
-      <div class="sectorContainer"></div>
-    `;
-    const container = box.querySelector('.sectorContainer');
-    task.sectors.forEach((secData, secIndex)=>{ container.appendChild(createSector(secData.type, secData, taskIndex, secIndex)); });
-    box.querySelector('.addSectorBtn').onclick = ()=>{ showSectorMenu(container, taskIndex); };
-    taskContainer.appendChild(box);
-  });
+function saveData() {
+    localStorage.setItem('tasksData', JSON.stringify(tasksData));
+}
+
+function render() {
+    taskContainer.innerHTML = '';
+    tasksData.forEach((task, taskIndex) => {
+        const box = document.createElement('div');
+        box.className = 'taskBox';
+        box.innerHTML = `
+            <div style="display:flex; justify-content:space-between;">
+                <div style="font-weight:700;">${task.date}</div>
+                <button class="addSectorBtn">＋</button>
+            </div>
+            <div style="height:1px;background:#ccc;margin:8px 0;"></div>
+            <div class="sectorContainer"></div>
+        `;
+        const container = box.querySelector('.sectorContainer');
+        task.sectors.forEach((secData, secIndex)=>{
+            container.appendChild(createSector(secData.type, secData, taskIndex, secIndex));
+        });
+        box.querySelector('.addSectorBtn').onclick = ()=>{ showSectorMenu(container, taskIndex); };
+        taskContainer.appendChild(box);
+    });
 }
 
 addTaskBtn.onclick = ()=>{
-  const date=new Date().toLocaleDateString();
-  tasksData.push({date:date,sectors:[]});
-  saveData();
-  render();
-}
+    const date = new Date().toLocaleDateString();
+    tasksData.push({ date: date, sectors: [] });
+    saveData();
+    render();
+};
 
+/* 섹터 메뉴 */
 function showSectorMenu(container, taskIndex){
-  if(container.querySelector('.menu')) return;
-  const menu=document.createElement('div'); menu.className='menu';
-  menu.style.display='flex'; menu.style.gap='6px'; menu.style.marginTop='4px';
-  const list=[{name:'영상 시청',type:'video'},{name:'개념 정리',type:'concept'},{name:'문풀',type:'problem'}];
-  list.forEach(item=>{
-    const btn=document.createElement('button'); btn.innerText=item.name;
-    btn.style.border='1px solid #FFCBD9'; btn.style.borderRadius='8px'; btn.style.color='#FFCBD9';
-    btn.style.background='#fff'; btn.style.fontWeight='700'; btn.style.padding='4px 6px';
-    btn.onclick=()=>{
-      tasksData[taskIndex].sectors.push({type:item.type,data:{}}); saveData(); render();
-    }
-    menu.appendChild(btn);
-  });
-  container.appendChild(menu);
+    if(container.querySelector('.menu')) return;
+    const menu = document.createElement('div');
+    menu.className='menu';
+    menu.style.border='1px solid #FFCBD9';
+    menu.style.borderRadius='8px';
+    menu.style.background='#fff';
+    menu.style.padding='6px';
+    menu.style.display='flex';
+    menu.style.gap='6px';
+    menu.style.marginTop='4px';
+
+    const list = [
+        { name:'영상 시청', type:'video' },
+        { name:'개념 정리', type:'concept' },
+        { name:'문풀', type:'problem' }
+    ];
+    list.forEach(item=>{
+        const btn = document.createElement('button');
+        btn.innerText = item.name;
+        btn.style.border='1px solid #FFCBD9';
+        btn.style.borderRadius='8px';
+        btn.style.background='#fff';
+        btn.style.color='#FFCBD9';
+        btn.style.fontWeight='700';
+        btn.style.padding='4px 6px';
+        btn.onclick=()=>{
+            tasksData[taskIndex].sectors.push({ type:item.type, data:{} });
+            saveData();
+            render();
+        };
+        menu.appendChild(btn);
+    });
+    container.appendChild(menu);
 }
 
-function createSector(type,data,taskIndex,secIndex){
-  const box=document.createElement('div'); box.className='sector';
-  if(type==='video'){
-    box.innerHTML=`<div style="font-weight:700;">영상 시청</div>
-      <input class="t_h" type="number" placeholder="시" value="${data.t_h||''}">
-      <input class="t_m" type="number" placeholder="분" value="${data.t_m||''}">
-      <input class="t_s" type="number" placeholder="초" value="${data.t_s||''}"><br>
-      <input class="c_h" type="number" placeholder="시" value="${data.c_h||''}">
-      <input class="c_m" type="number" placeholder="분" value="${data.c_m||''}">
-      <input class="c_s" type="number" placeholder="초" value="${data.c_s||''}">
-      <div style="height:8px;border:1px solid #FFCBD9;margin-top:5px;"><div class="bar" style="height:100%;background:#FFCBD9;width:0%;"></div></div>
-      <span class="heart">${data.done?'♥':'♡'}</span>`;
-    const inputs=box.querySelectorAll('input'); const bar=box.querySelector('.bar'); const heart=box.querySelector('.heart');
-    function update(){
-      const t=(Number(inputs[0].value)||0)*3600+(Number(inputs[1].value)||0)*60+(Number(inputs[2].value)||0);
-      const c=(Number(inputs[3].value)||0)*3600+(Number(inputs[4].value)||0)*60+(Number(inputs[5].value)||0);
-      if(t>0){ let p=Math.min(100,(c/t)*100); bar.style.width=p+'%'; heart.innerText=p===100?'♥':'♡'; data.done=p===100; }
-      ['t_h','t_m','t_s','c_h','c_m','c_s'].forEach((k,i)=>data[k]=inputs[i].value); saveData();
+/* 섹터 생성 */
+function createSector(type, data, taskIndex, secIndex){
+    const box = document.createElement('div');
+    box.className='sector';
+    box.style.border='1px solid #FFCBD9';
+    box.style.borderRadius='12px';
+    box.style.padding='8px';
+    box.style.marginTop='8px';
+
+    if(type==='video'){
+        box.innerHTML=`
+            <div style="font-weight:700;">영상 시청</div>
+            <input class="t_h" type="number" placeholder="시" value="${data.t_h||''}">
+            <input class="t_m" type="number" placeholder="분" value="${data.t_m||''}">
+            <input class="t_s" type="number" placeholder="초" value="${data.t_s||''}">
+            <br>
+            <input class="c_h" type="number" placeholder="시" value="${data.c_h||''}">
+            <input class="c_m" type="number" placeholder="분" value="${data.c_m||''}">
+            <input class="c_s" type="number" placeholder="초" value="${data.c_s||''}">
+            <div style="height:8px;border:1px solid #FFCBD9;margin-top:5px;">
+                <div class="bar" style="height:100%;background:#FFCBD9;width:0%;"></div>
+            </div>
+            <span class="heart">${data.done?'♥':'♡'}</span>
+        `;
+        const inputs = box.querySelectorAll('input');
+        const bar = box.querySelector('.bar');
+        const heart = box.querySelector('.heart');
+        function update(){
+            const t=(Number(inputs[0].value)||0)*3600+(Number(inputs[1].value)||0)*60+(Number(inputs[2].value)||0);
+            const c=(Number(inputs[3].value)||0)*3600+(Number(inputs[4].value)||0)*60+(Number(inputs[5].value)||0);
+            if(t>0){
+                let p=Math.min(100,(c/t)*100);
+                bar.style.width=p+'%';
+                heart.innerText=p===100?'♥':'♡';
+                data.done=p===100;
+            }
+            ['t_h','t_m','t_s','c_h','c_m','c_s'].forEach((k,i)=>data[k]=inputs[i].value);
+            saveData();
+        }
+        inputs.forEach(i=>i.addEventListener('input',update));
+        heart.onclick=()=>{
+            data.done=!data.done;
+            heart.innerText=data.done?'♥':'♡';
+            saveData();
+        };
     }
-    inputs.forEach(i=>i.addEventListener('input',update));
-    heart.onclick=()=>{ data.done=!data.done; heart.innerText=data.done?'♥':'♡'; saveData(); };
-  }
-  if(type==='concept'){
-    box.innerHTML=`<input class="text" value="${data.text||''}"><input class="check" type="checkbox" ${data.done?'checked':''}>`;
-    const text=box.querySelector('.text'); const check=box.querySelector('.check');
-    text.oninput=()=>{ data.text=text.value; saveData(); };
-    check.onchange=()=>{ data.done=check.checked; saveData(); };
-  }
-  if(type==='problem'){
-    box.innerHTML=`<input class="total" type="number" placeholder="총 문제" value="${data.total||''}">
-      <input class="doneInput" type="number" placeholder="푼 문제" value="${data.doneCount||''}">
-      <div style="height:8px;border:1px solid #FFCBD9;margin-top:5px;"><div class="bar" style="height:100%;background:#FFCBD9;width:0%;"></div></div>
-      <span class="heart">${data.done?'♥':'♡'}</span>`;
-    const total=box.querySelector('.total'); const done=box.querySelector('.doneInput'); const bar=box.querySelector('.bar'); const heart=box.querySelector('.heart');
-    function update(){
-      const t=Number(total.value)||0; const d=Number(done.value)||0;
-      if(t>0){ let p=Math.min(100,(d/t)*100); bar.style.width=p+'%'; heart.innerText=p===100?'♥':'♡'; data.done=p===100; }
-      data.total=total.value; data.doneCount=done.value; saveData();
+
+    if(type==='concept'){
+        box.innerHTML=`<input class="text" value="${data.text||''}"><input class="check" type="checkbox" ${data.done?'checked':''}>`;
+        const text = box.querySelector('.text');
+        const check = box.querySelector('.check');
+        text.oninput=()=>{ data.text=text.value; saveData(); };
+        check.onchange=()=>{ data.done=check.checked; saveData(); };
     }
-    total.addEventListener('input',update); done.addEventListener('input',update);
-    heart.onclick=()=>{ data.done=!data.done; heart.innerText=data.done?'♥':'♡'; saveData(); };
-  }
-  return box;
+
+    if(type==='problem'){
+        box.innerHTML=`
+            <input class="total" type="number" placeholder="총 문제" value="${data.total||''}">
+            <input class="doneInput" type="number" placeholder="푼 문제" value="${data.doneCount||''}">
+            <div style="height:8px;border:1px solid #FFCBD9;margin-top:5px;">
+                <div class="bar" style="height:100%;background:#FFCBD9;width:0%;"></div>
+            </div>
+            <span class="heart">${data.done?'♥':'♡'}</span>
+        `;
+        const total = box.querySelector('.total');
+        const done = box.querySelector('.doneInput');
+        const bar = box.querySelector('.bar');
+        const heart = box.querySelector('.heart');
+        function update(){
+            const t = Number(total.value)||0;
+            const d = Number(done.value)||0;
+            if(t>0){
+                let p=Math.min(100,(d/t)*100);
+                bar.style.width=p+'%';
+                heart.innerText=p===100?'♥':'♡';
+                data.done=p===100;
+            }
+            data.total=total.value;
+            data.doneCount=done.value;
+            saveData();
+        }
+        total.addEventListener('input',update);
+        done.addEventListener('input',update);
+        heart.onclick=()=>{
+            data.done=!data.done;
+            heart.innerText=data.done?'♥':'♡';
+            saveData();
+        };
+    }
+    return box;
 }
 
-// 초기 렌더
-render(); renderChat();
+/* 시작 */
+render();
+renderChat();
 </script>
+
 </body>
 </html>
