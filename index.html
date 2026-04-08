@@ -122,54 +122,64 @@ function renderChat(){
   let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
 
   chatData.forEach((m,i)=>{
-    let row=document.createElement('div');
-    row.className='row';
-    row.style.flexDirection='column';
+    let row = document.createElement('div');
+    row.className='row'; // flex는 CSS에서 처리
 
-let msg=document.createElement('div');
-msg.className='msg '+m.type;
-msg.innerText=m.text;
+    let msg = document.createElement('div');
+    msg.className='msg ' + m.type;
+    msg.innerText = m.text;
 
-// 👇 여기 추가
-let bubbleWrap = document.createElement('div');
-bubbleWrap.style.display='flex';
-bubbleWrap.style.flexDirection='column';
+    // 핵심: 말풍선 + 읽음 묶는 박스
+    let bubbleWrap = document.createElement('div');
+    bubbleWrap.style.display='flex';
+    bubbleWrap.style.flexDirection='column';
+    bubbleWrap.style.alignItems = (m.type === 'me') ? 'flex-end' : 'flex-start';
 
-bubbleWrap.appendChild(msg);
-
-// 기존 row.appendChild(msg); 대신 이걸로
-row.appendChild(bubbleWrap);
+    bubbleWrap.appendChild(msg);
 
     // 읽음 표시
     if(m.type==='me' && i===lastMeIndex){
-  let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
+      let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
 
-  if(nextAI && !isTyping){
-    const diff = nextAI.time - m.time;
-    const readText = getReadText(diff);
+      if(nextAI && !isTyping){
+        const diff = nextAI.time - m.time;
+        const readText = getReadText(diff);
 
-    let read = document.createElement('div');
-    read.innerText = readText;
-    read.style.fontSize='11px';
-    read.style.color='#999';
-    read.style.marginTop='2px';
-    read.style.alignSelf='flex-end';
+        let read = document.createElement('div');
+        read.innerText = readText;
+        read.style.fontSize='11px';
+        read.style.color='#999';
+        read.style.marginTop='2px';
 
-    bubbleWrap.appendChild(read); // 👈 여기로
-  }
-}
-  // 타이핑 표시 ("…")
+        bubbleWrap.appendChild(read);
+      }
+    }
+
+    row.appendChild(bubbleWrap);
+    chatEl.appendChild(row);
+  });
+
+  // 타이핑 표시
   if(isTyping){
-    let typingRow = document.createElement('div');
-    typingRow.className='row';
+    let row = document.createElement('div');
+    row.className='row';
+
+    let bubbleWrap = document.createElement('div');
+    bubbleWrap.style.display='flex';
+    bubbleWrap.style.flexDirection='column';
+    bubbleWrap.style.alignItems='flex-start';
 
     let typingMsg = document.createElement('div');
     typingMsg.className='msg ai';
     typingMsg.innerText='...';
 
-    typingRow.appendChild(typingMsg);
-    chatEl.appendChild(typingRow);
+    bubbleWrap.appendChild(typingMsg);
+    row.appendChild(bubbleWrap);
+    chatEl.appendChild(row);
   }
+
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
 
   chatEl.scrollTop=chatEl.scrollHeight;
 }
