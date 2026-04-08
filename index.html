@@ -6,44 +6,79 @@
 <title>♡</title>
 <style>
 body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
+
 .header {
   display:flex; justify-content:space-between; align-items:center;
   padding:10px 16px; border-bottom:1px solid #FFCBD9; background:#fff;
 }
-.header .name { font-weight:600; font-size:16px; color:#333; }
+.header .name { font-weight:600; font-size:16px; }
 .header .add-today { font-weight:700; font-size:22px; color:#FFCBD9; cursor:pointer; }
 
 #container { display:flex; flex-direction:column; height:calc(100vh - 52px); }
 .chat-planner { flex:1; overflow-y:auto; padding:10px; }
 
-#chat { flex:1; display:flex; flex-direction:column; overflow-y:auto; margin-top:10px; padding:0 .row {
-  display: flex;
-  margin: 6px 0;
+#chat {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+  margin-top:10px;
+  padding:0 10px; /* ← 여기 정상 복구 */
+}
+
+/* 채팅 */
+.row {
+  display:flex;
+  margin:6px 0;
 }
 
 .msg {
-  max-width: 65%;
-  padding: 10px 14px;
-  border-radius: 18px;
-  font-size: 14px;
-  word-break: break-word;
+  max-width:65%;
+  padding:10px 14px;
+  border-radius:18px;
+  font-size:14px;
+  word-break:break-word;
 }
 
-/* 내 메시지 */
 .me {
-  margin-left: auto;
-  background: linear-gradient(135deg,#FFCBD9,#FF97B3);
-  color: white;
+  margin-left:auto;
+  background:linear-gradient(135deg,#FFCBD9,#FF97B3);
+  color:white;
 }
 
-/* 상대 메시지 */
 .ai {
-  margin-right: auto;
-  background: #f1f1f1;
+  margin-right:auto;
+  background:#f1f1f1;
 }
-.inputArea { display:flex; padding:8px; border-top:1px solid #eee; background:white; }
-input { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
-button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20px; background:#FFCBD9; color:white; cursor:pointer; }
+
+/* 입력창 */
+.inputArea {
+  display:flex;
+  align-items:center;
+  padding:8px;
+  border-top:1px solid #eee;
+  background:white;
+  gap:6px;
+}
+
+.inputArea input {
+  flex:1;
+  height:36px;
+  padding:0 12px;
+  border-radius:18px;
+  border:1px solid #ddd;
+}
+
+.sendBtn {
+  height:36px;
+  padding:0 14px;
+  border:none;
+  border-radius:18px;
+  background:#FFCBD9;
+  color:white;
+  cursor:pointer;
+  flex-shrink:0;
+}
 
 /* 플래너 화면 기본 숨김 */
 #plannerScreen { display:none; }
