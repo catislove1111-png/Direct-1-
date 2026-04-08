@@ -71,7 +71,21 @@ button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20p
   <input id="msgInput" placeholder="메시지 보내기...">
   <button class="sendBtn" onclick="sendMsg()">전송</button>
 </div>
+<body>
+  <!-- 기존 DM 헤더 + 채팅창 -->
+  <div class="header"> ... </div>
+  <div id="chat" class="chat"></div>
 
+  <!-- 플래너 화면 HTML 여기 붙임 -->
+  <div id="plannerScreen" style="display:none;">
+    <!-- 플래너 헤더, D-day, 오늘 날짜, 섹터 선택, 할일 추가 버튼 등 -->
+  </div>
+
+  <!-- 메시지 입력창 -->
+  <div class="inputArea">
+    <input id="msgInput" placeholder="메시지 보내기...">
+    <button class="sendBtn" onclick="sendMsg()">전송</button>
+  </div>
 <script>
 // ========= 초기 세팅 =========
 const chatPlanner = document.getElementById('chatPlanner');
