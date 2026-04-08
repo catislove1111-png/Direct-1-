@@ -3,203 +3,383 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>♡</title>
+<title>DM + Planner</title>
 
 <style>
 body { margin:0; font-family:-apple-system; background:#fff; }
 
+/* 헤더 */
 .header {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:10px 16px; border-bottom:1px solid #FFCBD9;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px;
+  border-bottom:1px solid #FFCBD9;
 }
+
 .name { font-weight:600; }
-.add-btn { font-size:22px; color:#FFCBD9; cursor:pointer; }
+.plus { font-size:22px; color:#FFCBD9; cursor:pointer; }
 
-#container { display:flex; flex-direction:column; height:calc(100vh - 52px); }
+/* 화면 */
+.screen { display:none; }
+.active { display:block; }
 
-#chat { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
-.row { display:flex; margin:6px 0; }
+/* 채팅 */
+#chat {
+  height:calc(100vh - 110px);
+  overflow-y:auto;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+}
 
-.msg {
+.row { display:flex; margin:4px 0; }
+.row.me { justify-content:flex-end; }
+.row.ai { justify-content:flex-start; }
+
+.bubble {
   max-width:65%;
   padding:10px 14px;
   border-radius:18px;
   font-size:14px;
 }
 
-.me { margin-left:auto; background:linear-gradient(135deg,#FFCBD9,#FF97B3); color:white; }
-.ai { margin-right:auto; background:#f1f1f1; }
+.me .bubble {
+  background:linear-gradient(135deg,#FFCBD9,#FF97B3);
+  color:#fff;
+}
 
-.read { font-size:11px; color:#999; margin-top:2px; }
+.ai .bubble {
+  background:#f1f1f1;
+}
 
-.inputArea { display:flex; padding:8px; border-top:1px solid #eee; }
-.inputArea input { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
-.sendBtn { margin-left:6px; border:none; border-radius:20px; background:#FFCBD9; color:white; padding:0 12px; }
+.read {
+  font-size:11px;
+  color:#999;
+  margin-top:2px;
+  text-align:right;
+}
 
-#plannerScreen { display:none; padding:20px; }
-.taskBox { border:2px solid #FFCBD9; border-radius:14px; padding:12px; margin-top:12px; }
+/* 입력 */
+.inputArea {
+  display:flex;
+  padding:8px;
+  border-top:1px solid #eee;
+}
 
-.sector { border:1px solid #FFCBD9; border-radius:10px; padding:8px; margin-top:8px; }
-.progress { height:6px; border:1px solid #FFCBD9; border-radius:4px; margin-top:4px; }
-.fill { height:100%; background:#FFCBD9; width:0%; }
+#msgInput {
+  flex:1;
+  padding:10px;
+  border-radius:20px;
+  border:1px solid #ddd;
+}
+
+.sendBtn {
+  margin-left:6px;
+  padding:0 14px;
+  border:none;
+  border-radius:20px;
+  background:#FFCBD9;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* 플래너 */
+#plannerContent { padding:20px; }
+
+#dDay {
+  font-size:32px;
+  font-weight:700;
+  margin-bottom:20px;
+}
+
+.addTaskBtn {
+  border:2px solid #FFCBD9;
+  padding:10px;
+  border-radius:12px;
+  color:#FFCBD9;
+  background:#fff;
+  cursor:pointer;
+}
+
+.taskBox {
+  border:2px solid #FFCBD9;
+  border-radius:16px;
+  padding:12px;
+  margin-top:12px;
+}
+
+.taskDate {
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.line {
+  height:1px;
+  background:#ccc;
+  margin-bottom:8px;
+}
+
+/* 섹터 */
+.sector {
+  border:1px solid #FFCBD9;
+  border-radius:12px;
+  padding:8px;
+  margin-top:8px;
+}
+
+.progressBar {
+  width:100%;
+  height:8px;
+  border:1px solid #FFCBD9;
+  border-radius:4px;
+  margin-top:4px;
+}
+
+.progressFill {
+  height:100%;
+  width:0%;
+  background:#FFCBD9;
+}
+
+.heart {
+  cursor:pointer;
+  color:#FFCBD9;
+  font-size:18px;
+}
 </style>
 </head>
 
 <body>
 
-<div id="dmScreen">
+<!-- DM -->
+<div id="dmScreen" class="screen active">
   <div class="header">
     <div class="name">김현준</div>
-    <div class="add-btn" id="goPlanner">＋</div>
+    <div class="plus" id="goPlanner">＋</div>
   </div>
 
-  <div id="container">
-    <div id="chat"></div>
-  </div>
+  <div id="chat"></div>
 
   <div class="inputArea">
     <input id="msgInput">
-    <button class="sendBtn" id="sendBtn">전송</button>
+    <button class="sendBtn">전송</button>
   </div>
 </div>
 
-<div id="plannerScreen">
-  <div id="backBtn">←</div>
-  <h1 id="dDay"></h1>
-  <div id="today"></div>
-  <button id="addTaskBtn">할 일 추가</button>
-  <div id="taskContainer"></div>
+<!-- 플래너 -->
+<div id="plannerScreen" class="screen">
+  <div class="header">
+    <div id="backBtn">&lt;</div>
+    <div>플래너</div>
+    <div></div>
+  </div>
+
+  <div id="plannerContent">
+    <div id="dDay"></div>
+    <button class="addTaskBtn">할 일 추가</button>
+    <div id="taskContainer"></div>
+  </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", ()=>{
 
-const dm = document.getElementById('dmScreen');
-const planner = document.getElementById('plannerScreen');
+/* 화면 전환 */
+const dmScreen = document.getElementById('dmScreen');
+const plannerScreen = document.getElementById('plannerScreen');
+
+document.getElementById('goPlanner').onclick = ()=>{
+  dmScreen.classList.remove('active');
+  plannerScreen.classList.add('active');
+  updateDDay();
+};
+
+document.getElementById('backBtn').onclick = ()=>{
+  plannerScreen.classList.remove('active');
+  dmScreen.classList.add('active');
+};
+
+/* DDAY */
+function updateDDay(){
+  const target = new Date(2026,10,19);
+  const now = new Date();
+  const diff = Math.ceil((target-now)/(1000*60*60*24));
+  document.getElementById('dDay').innerText = "D-" + diff;
+}
+
+/* ===== 채팅 ===== */
 const chatEl = document.getElementById('chat');
 const input = document.getElementById('msgInput');
+const sendBtn = document.querySelector('.sendBtn');
 
-let chat = JSON.parse(localStorage.getItem('chat')||'[]');
-let isTyping=false;
+let chatData = JSON.parse(localStorage.getItem('chat')||'[]');
+let isTyping = false;
 
-// 화면 전환
-goPlanner.onclick=()=>{
- dm.style.display='none';
- planner.style.display='block';
- const t=new Date(2026,10,19);
- const n=new Date();
- dDay.innerText='D-'+Math.ceil((t-n)/(86400000));
- today.innerText=n.toLocaleDateString('ko-KR');
-};
-backBtn.onclick=()=>{planner.style.display='none';dm.style.display='block';};
+function renderChat(){
+  chatEl.innerHTML='';
+  let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
 
-// 채팅 렌더
-function render(){
- chatEl.innerHTML='';
- let lastMe=chat.map(m=>m.type).lastIndexOf('me');
+  chatData.forEach((m,i)=>{
+    let row = document.createElement('div');
+    row.className = 'row ' + m.type;
 
- chat.forEach((m,i)=>{
-  let row=document.createElement('div'); row.className='row';
-  let wrap=document.createElement('div');
-  wrap.style.display='flex'; wrap.style.flexDirection='column';
-  wrap.style.alignItems=m.type==='me'?'flex-end':'flex-start';
+    let wrap = document.createElement('div');
 
-  let msg=document.createElement('div');
-  msg.className='msg '+m.type;
-  msg.innerText=m.text;
-  wrap.appendChild(msg);
+    let bubble = document.createElement('div');
+    bubble.className='bubble';
+    bubble.innerText=m.text;
 
-  if(m.type==='me' && i===lastMe && !isTyping){
-   let next=chat.slice(i+1).find(x=>x.type==='ai');
-   if(next){
-    let r=document.createElement('div');
-    let d=next.time-m.time;
-    if(d<10000) r.innerText='방금 전 읽음';
-    else if(d<3600000) r.innerText=Math.floor(d/60000)+'분 전 읽음';
-    else r.innerText=Math.floor(d/3600000)+'시간 전 읽음';
-    r.className='read';
-    wrap.appendChild(r);
-   }
+    wrap.appendChild(bubble);
+
+    if(m.type==='me' && i===lastMeIndex){
+      let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
+      if(nextAI && !isTyping){
+        let read = document.createElement('div');
+        read.className='read';
+        read.innerText='읽음';
+        wrap.appendChild(read);
+      }
+    }
+
+    row.appendChild(wrap);
+    chatEl.appendChild(row);
+  });
+
+  if(isTyping){
+    let row = document.createElement('div');
+    row.className='row ai';
+    let bubble = document.createElement('div');
+    bubble.className='bubble';
+    bubble.innerText='...';
+    row.appendChild(bubble);
+    chatEl.appendChild(row);
   }
 
-  row.appendChild(wrap);
-  chatEl.appendChild(row);
- });
-
- if(isTyping){
-  let r=document.createElement('div'); r.className='row';
-  let m=document.createElement('div'); m.className='msg ai'; m.innerText='...';
-  r.appendChild(m); chatEl.appendChild(r);
- }
-
- chatEl.scrollTop=chatEl.scrollHeight;
+  chatEl.scrollTop = chatEl.scrollHeight;
 }
 
-function save(t,type){
- chat.push({text:t,type,time:Date.now()});
- localStorage.setItem('chat',JSON.stringify(chat));
- render();
+function save(msg,type){
+  chatData.push({text:msg,type:type,time:Date.now()});
+  localStorage.setItem('chat',JSON.stringify(chatData));
+  renderChat();
 }
 
-// 답장
-function reply(msg){
- const arr=['ㅇㅇ','왜','ㅋㅋ','ㄴ'];
- save(arr[Math.floor(Math.random()*arr.length)],'ai');
+function generateReply(){
+  const arr=['ㅇㅇ','ㅋㅋ','왜','뭐임'];
+  return arr[Math.floor(Math.random()*arr.length)];
 }
 
-function replyDelay(msg){
- let d=Math.random()*5000+1000;
- isTyping=true; render();
- setTimeout(()=>{isTyping=false; save(reply(msg),'ai');},d);
+function replyFlow(msg){
+  setTimeout(()=>{
+    isTyping=true;
+    renderChat();
+
+    setTimeout(()=>{
+      isTyping=false;
+      save(generateReply(msg),'ai');
+    },5000);
+
+  }, Math.random()*600000+60000);
 }
 
-// 전송
-sendBtn.onclick=()=>{
- let t=input.value.trim();
- if(!t) return;
- save(t,'me'); input.value='';
- replyDelay(t);
+function sendMsg(){
+  let text=input.value.trim();
+  if(!text) return;
+  save(text,'me');
+  input.value='';
+  replyFlow(text);
+}
+
+sendBtn.onclick = sendMsg;
+
+/* ===== 플래너 ===== */
+const taskContainer = document.getElementById('taskContainer');
+const addTaskBtn = document.querySelector('.addTaskBtn');
+
+addTaskBtn.onclick = ()=>{
+  const box = document.createElement('div');
+  box.className='taskBox';
+
+  const date = new Date().toLocaleDateString();
+
+  box.innerHTML = `
+    <div class="taskDate">${date}</div>
+    <div class="line"></div>
+    <button onclick="addSector(this)">+ 섹터 추가</button>
+    <div class="sectorContainer"></div>
+  `;
+
+  taskContainer.appendChild(box);
 };
 
-// 독촉
-function nag(){
- const m=['공부좀','연락 ㄴ','뭐함','공부해'];
- save(m[Math.floor(Math.random()*m.length)],'ai');
- setTimeout(nag,3600000+Math.random()*3600000);
+function addSector(btn){
+  const container = btn.nextElementSibling;
+  const type = prompt('1: 영상 / 2: 개념 / 3: 문풀');
+
+  const sec = document.createElement('div');
+  sec.className='sector';
+
+  /* 영상 */
+  if(type==='1'){
+    sec.innerHTML=`
+      영상 시청<br>
+      총: <input class="t">h <input class="t">m <input class="t">s<br>
+      현재: <input class="c">h <input class="c">m <input class="c">s
+      <div class="progressBar"><div class="progressFill"></div></div>
+      <span class="heart">♡</span>
+    `;
+
+    const inputs = sec.querySelectorAll('input');
+    const fill = sec.querySelector('.progressFill');
+
+    inputs.forEach(i=>{
+      i.oninput=()=>{
+        let t = (inputs[0].value*3600||0)+(inputs[1].value*60||0)+(inputs[2].value||0);
+        let c = (inputs[3].value*3600||0)+(inputs[4].value*60||0)+(inputs[5].value||0);
+        if(t>0) fill.style.width=(c/t*100)+'%';
+      };
+    });
+
+    sec.querySelector('.heart').onclick=()=>sec.querySelector('.heart').innerText='♥';
+  }
+
+  /* 개념 */
+  if(type==='2'){
+    sec.innerHTML=`개념 정리 <input type="checkbox">`;
+  }
+
+  /* 문풀 (디테일 완성) */
+  if(type==='3'){
+    sec.innerHTML=`
+      문풀<br>
+      <input class="total" placeholder="총량 (예: 30)">
+      <input class="done" placeholder="현재 푼 수">
+      <div class="progressBar"><div class="progressFill"></div></div>
+      <span class="heart">♡</span>
+    `;
+
+    const total = sec.querySelector('.total');
+    const done = sec.querySelector('.done');
+    const fill = sec.querySelector('.progressFill');
+
+    function update(){
+      let t = parseInt(total.value)||0;
+      let d = parseInt(done.value)||0;
+      if(t>0) fill.style.width=(d/t*100)+'%';
+    }
+
+    total.oninput = update;
+    done.oninput = update;
+
+    sec.querySelector('.heart').onclick=()=>sec.querySelector('.heart').innerText='♥';
+  }
+
+  container.appendChild(sec);
 }
-nag();
 
-// 플래너
-addTaskBtn.onclick=()=>{
- let box=document.createElement('div'); box.className='taskBox';
- box.innerText=new Date().toLocaleDateString('ko-KR');
+/* 시작 */
+renderChat();
 
- let btns=['영상 시청','개념 정리','문풀'];
- btns.forEach(t=>{
-  let b=document.createElement('button');
-  b.innerText=t;
-  b.onclick=()=>{
-   let sec=document.createElement('div'); sec.className='sector';
-   sec.innerText=t;
-
-   if(t==='영상 시청'||t==='문풀'){
-    let bar=document.createElement('div'); bar.className='progress';
-    let fill=document.createElement('div'); fill.className='fill';
-    bar.appendChild(fill);
-    sec.appendChild(bar);
-   }
-
-   box.appendChild(sec);
-  };
-  box.appendChild(b);
- });
-
- taskContainer.appendChild(box);
-};
-
-render();
-
-});
 </script>
 
 </body>
