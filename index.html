@@ -3,56 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Direct</title>
+<title>Study DM</title>
 <style>
-body { margin:0; font-family:-apple-system; background:#fff; }
-.header {
-  display:flex; align-items:center;
-  padding:10px; border-bottom:1px solid #eee;
-}
+body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
+.header { display:flex; align-items:center; padding:10px; border-bottom:1px solid #eee; background:#FFC8D9; }
 .header img { width:36px; height:36px; border-radius:50%; margin-right:10px; }
-.name { font-weight:600; font-size:15px; }
+.name { font-weight:600; font-size:15px; flex:1; }
 .sub { font-size:12px; color:#888; }
+.addTaskIcon { width:28px; height:28px; cursor:pointer; }
 
-#taskArea { padding:10px; border-bottom:1px solid #eee; }
+#taskArea { padding:10px; }
 .chat { padding:10px; margin-bottom:70px; display:flex; flex-direction:column; }
-
 .row { display:flex; align-items:flex-end; margin:6px 0; }
 .msg { max-width:65%; padding:10px 14px; border-radius:18px; font-size:14px; }
-.me { margin-left:auto; background:linear-gradient(135deg,#5B9CFF,#7B5CFF); color:white; }
+.me { margin-left:auto; background:linear-gradient(135deg,#FFC8D9,#FFA6C0); color:white; }
 .ai { background:#f1f1f1; }
 .pfp { width:26px; height:26px; border-radius:50%; margin-right:6px; }
-
 .read { font-size:11px; color:#999; margin:2px 10px; text-align:right; }
 
-.inputArea {
-  position:fixed; bottom:0; width:100%; display:flex; padding:8px;
-  border-top:1px solid #eee; background:white;
-}
-input#msgInput {
-  flex:1; padding:10px; border-radius:20px; border:1px solid #ddd;
-}
-button, .sendBtn {
-  margin-left:6px; cursor:pointer; border:none; border-radius:20px;
-  background:#5B9CFF; color:white; width:48px; height:48px; object-fit:contain;
-}
+.inputArea { position:fixed; bottom:0; width:100%; display:flex; padding:8px; border-top:1px solid #eee; background:white; }
+input#msgInput { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
+button, .sendBtn { margin-left:6px; cursor:pointer; border:none; border-radius:20px; background:#FFC8D9; color:white; width:48px; height:48px; object-fit:contain; }
+
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,200,217,0.95); overflow:auto; padding:20px; box-sizing:border-box; }
+.modalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.modalHeader h1 { font-size:2em; font-weight:bold; }
+.closeModal { cursor:pointer; font-size:1.5em; font-weight:bold; }
+.addSectionBtn { display:inline-block; padding:6px 12px; border:2px solid #FFC8D9; border-radius:12px; cursor:pointer; margin-bottom:20px; }
+
+.section { border:1px solid #FFC8D9; border-radius:12px; padding:12px; margin-bottom:16px; background:#fff; }
+.sectionDate { font-weight:bold; margin-bottom:4px; }
+.separator { height:2px; background:#FFC8D9; margin:4px 0; }
+
+.videoTask, .conceptTask { margin:8px 0; padding:6px; border-radius:8px; border:1px solid #FFC8D9; background:#fff; }
+.videoTitle { font-weight:bold; }
+.videoLength { font-size:12px; color:#FFB0C2; margin:2px 0; }
+.progressContainer { height:8px; border:1px solid #FFC8D9; border-radius:4px; background:#fff; margin-top:4px; }
+.progressBar { height:100%; width:0%; background:#FFC8D9; border-radius:4px; }
+.heartBtn { cursor:pointer; font-size:18px; color:#FFC8D9; margin-left:6px; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <img src="pfp.jpg">
-  <div>
-    <div class="name">김현준</div>
-    <div class="sub">오늘 활동 중</div>
-  </div>
-</div>
-
-<!-- 오늘 할 일 플래너 -->
-<div id="taskArea"></div>
-<div style="padding:10px;">
-  <input id="newTask" placeholder="오늘 할 일 추가">
-  <button onclick="addTaskFromInput()">+</button>
+  <div class="name">김현준</div>
+  <div class="addTaskIcon" onclick="openModal()">🩷</div>
 </div>
 
 <div id="chat" class="chat"></div>
@@ -62,55 +58,99 @@ button, .sendBtn {
   <img src="send.png" class="sendBtn" onclick="sendMsg()">
 </div>
 
+<div id="taskModal" class="modal">
+  <div class="modalHeader">
+    <h1>디데이: 2026-11-19</h1>
+    <div class="closeModal" onclick="closeModal()">✖</div>
+  </div>
+  <div class="addSectionBtn" onclick="addSection()">할 일 추가</div>
+  <div id="sectionsContainer"></div>
+</div>
+
 <script>
 let chat = document.getElementById("chat");
-let tasks = [];
+let sectionsContainer = document.getElementById("sectionsContainer");
+let sections = [];
 let sentMsgs = new Set();
-let studyMsgs = [
-  "넌 공부 안하냐", "공부좀해", "너 공부안하면 연락안함", "ㅗ", "연락 ㄴ",
-  "왜 아직 다 안햇냐", "좀 공부쫌 하자", "공부해서 나 먹여살린다매 왜 안하냐",
-  "얼른 시작해", "또 미루냐", "뭐하냐 지금", "ㅈㅂ공부쫌해라;",
-  "왜 손 놓고 있어", "할 거 다 해야지", "너는 대학 갈 생각 없냐", "좀 집중해",
-  "아직 안 끝났냐", "대체 뭐하냐", "쫌 제대로 해", "빨리 하자" "나한테 이러느랴고 공부 ㅈ도 안한거 개웃기네"
-];
+let studyMsgs = ["넌 공부 안하냐","공부좀해","너 공부안하면 연락안함","ㅗ","연락 ㄴ","왜 아직 안했냐","좀 하자","공부 잘해서 나 먹여살린다매","너 고3아니냐","나한테 이러면서 공부도 안하는건 쫌 한심하네","공부 왜안함","니 인생 걍 놧냐"];
 
-// 오늘 할 일 기능
-function addTask(text){
-  if(!text.trim()) return;
-  tasks.push({text:text.trim(), done:false});
-  renderTasks();
+function openModal(){ document.getElementById("taskModal").style.display="block"; }
+function closeModal(){ document.getElementById("taskModal").style.display="none"; }
+
+function addSection(){
+  const section = {date:"2026-11-19", videos:[], concepts:[]};
+  sections.push(section);
+  renderSections();
 }
-function addTaskFromInput(){
-  let input = document.getElementById("newTask");
-  addTask(input.value);
-  input.value="";
-}
-function toggleTask(i){
-  tasks[i].done = !tasks[i].done;
-  renderTasks();
-}
-function renderTasks(){
-  const taskArea = document.getElementById("taskArea");
-  taskArea.innerHTML="";
-  tasks.forEach((t,i)=>{
-    const row = document.createElement("div");
-    row.style.display="flex";
-    row.style.alignItems="center";
-    row.style.margin="4px 0";
 
-    const cb = document.createElement("input");
-    cb.type="checkbox"; cb.checked=t.done;
-    cb.onchange=()=>toggleTask(i);
+function renderSections(){
+  sectionsContainer.innerHTML="";
+  sections.forEach((s,i)=>{
+    const secDiv = document.createElement("div");
+    secDiv.className="section";
 
-    const span = document.createElement("span");
-    span.innerText = t.text; span.style.marginLeft="8px";
+    const dateDiv = document.createElement("div");
+    dateDiv.className="sectionDate";
+    dateDiv.innerText=s.date;
+    secDiv.appendChild(dateDiv);
 
-    row.appendChild(cb); row.appendChild(span);
-    taskArea.appendChild(row);
+    const separator = document.createElement("div");
+    separator.className="separator";
+    secDiv.appendChild(separator);
+
+    // 영상 섹터
+    const videoDiv = document.createElement("div");
+    videoDiv.className="videoTask";
+    const videoTitleInput = document.createElement("input");
+    videoTitleInput.placeholder="영상 제목";
+    videoDiv.appendChild(videoTitleInput);
+
+    const timeContainer = document.createElement("div");
+    timeContainer.style.display="flex"; timeContainer.style.alignItems="center"; timeContainer.style.marginTop="4px";
+
+    const hourInput = document.createElement("input"); hourInput.type="number"; hourInput.min=0; hourInput.placeholder="시간"; hourInput.style.width="40px";
+    const minInput = document.createElement("input"); minInput.type="number"; minInput.min=0; minInput.placeholder="분"; minInput.style.width="40px";
+    const secInput = document.createElement("input"); secInput.type="number"; secInput.min=0; secInput.placeholder="초"; secInput.style.width="40px";
+
+    timeContainer.appendChild(hourInput);
+    timeContainer.appendChild(minInput);
+    timeContainer.appendChild(secInput);
+    videoDiv.appendChild(timeContainer);
+
+    // 진행률
+    const progressContainer = document.createElement("div"); progressContainer.className="progressContainer";
+    const progressBar = document.createElement("div"); progressBar.className="progressBar";
+    progressContainer.appendChild(progressBar);
+    videoDiv.appendChild(progressContainer);
+
+    const heart = document.createElement("span"); heart.className="heartBtn"; heart.innerText="♡";
+    heart.onclick=()=>{
+      progressBar.style.width="100%";
+      heart.innerText="♥";
+    }
+    videoDiv.appendChild(heart);
+    secDiv.appendChild(videoDiv);
+
+    // 개념정리 섹터
+    const conceptDiv = document.createElement("div"); conceptDiv.className="conceptTask";
+    const conceptInput = document.createElement("input"); conceptInput.placeholder="개념 정리";
+    const conceptCheck = document.createElement("input"); conceptCheck.type="checkbox"; conceptCheck.style.marginLeft="6px";
+    conceptDiv.appendChild(conceptInput); conceptDiv.appendChild(conceptCheck);
+
+    secDiv.appendChild(conceptDiv);
+
+    sectionsContainer.appendChild(secDiv);
+
+    // 시간 입력 시 1시간 미만이면 시간칸 숨김
+    function updateTimeDisplay(){
+      const h = parseInt(hourInput.value)||0;
+      if(h===0) hourInput.style.display="none"; else hourInput.style.display="inline-block";
+    }
+    hourInput.oninput = updateTimeDisplay;
   });
 }
 
-// 채팅 로드
+// 채팅
 function timeAgo(ts){
   let diff = Math.floor((Date.now()-ts)/60000);
   if(diff<1) return "방금 전";
@@ -124,38 +164,17 @@ function load(){
   let lastMeIndex = [...data].map(m=>m.type).lastIndexOf("me");
 
   data.forEach((m,i)=>{
-    let row=document.createElement("div");
-    row.className="row";
-    if(m.type==="ai"){
-      let img=document.createElement("img");
-      img.src="pfp.jpg";
-      img.className="pfp";
-      row.appendChild(img);
-    }
-    let msg=document.createElement("div");
-    msg.className="msg "+m.type;
-    msg.innerText=m.text;
-    row.appendChild(msg); chat.appendChild(row);
-
-    if(i === lastMeIndex){
-      let r=document.createElement("div");
-      r.className="read";
-      r.innerText="읽음 · "+timeAgo(m.time);
-      chat.appendChild(r);
-    }
+    let row=document.createElement("div"); row.className="row";
+    if(m.type==="ai"){ let img=document.createElement("img"); img.src="pfp.jpg"; img.className="pfp"; row.appendChild(img);}
+    let msg=document.createElement("div"); msg.className="msg "+m.type; msg.innerText=m.text; row.appendChild(msg); chat.appendChild(row);
+    if(i === lastMeIndex){ let r=document.createElement("div"); r.className="read"; r.innerText="읽음 · "+timeAgo(m.time); chat.appendChild(r);}
   });
   chat.scrollTop=chat.scrollHeight;
 }
 
-// 메시지 보내기
 function sendMsg(){
-  let input = document.getElementById("msgInput");
-  let text = input.value.trim();
-  if(!text) return;
-  save(text,"me");
-  input.value="";
-
-  // 사용자가 입력 중이면 AI 답장 지연
+  let input = document.getElementById("msgInput"); let text = input.value.trim();
+  if(!text) return; save(text,"me"); input.value="";
   setTimeout(()=>{
     if(document.getElementById("msgInput").value.trim()==="") aiReply(text);
   },1500);
@@ -163,30 +182,18 @@ function sendMsg(){
 function save(text,type){
   let data = JSON.parse(localStorage.getItem("chat")||"[]");
   data.push({text,type,time:Date.now()});
-  localStorage.setItem("chat",JSON.stringify(data));
-  load();
+  localStorage.setItem("chat",JSON.stringify(data)); load();
 }
+function aiReply(userMsg){ let base=["ㅅ","ㅎㅅ","왜ㅅ"]; let msg=base[Math.floor(Math.random()*base.length)]; save(msg,"ai"); }
 
+setInterval(()=>{
+  const available = studyMsgs.filter(m=>!sentMsgs.has(m));
+  if(available.length===0) sentMsgs.clear();
+  const msg = available[Math.floor(Math.random()*available.length)];
+  sentMsgs.add(msg); save(msg,"ai");
+}, 1000*60*5);
 
-// 공부 압박
-function studyPressure(){
-  const undone = tasks.filter(t=>!t.done).length;
-  if(tasks.length>0 && undone/tasks.length >0.5){
-    let available = studyMsgs.filter(m=>!sentMsgs.has(m));
-    if(available.length===0) sentMsgs.clear();
-    let msg = available[Math.floor(Math.random()*available.length)];
-    sentMsgs.add(msg); save(msg,"ai");
-  }
-}
-
-// 랜덤 시간마다 압박 전송
-setInterval(studyPressure, 1000*60*(3+Math.random()*7));
-
-// 초기 로드
-document.addEventListener("DOMContentLoaded",()=>{
-  load();
-});
+document.addEventListener("DOMContentLoaded",()=>{ load(); });
 </script>
-
 </body>
 </html>
