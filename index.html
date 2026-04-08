@@ -166,11 +166,15 @@ function sendMsg(){
   save(text,"me");
   input.value = "";
 
-  function reply(userMsg){
-  let botMsg = generateReply(userMsg);
-  save(botMsg, "ai");
+  // AI 답장 1.5초 후 생성
+  setTimeout(() => {
+    let botMsg = generateReply(text);
+    save(botMsg, "ai");
+  }, 1500);
 }
-}
+  document.getElementById("msgInput").addEventListener("keydown", e => {
+  if(e.key === "Enter") sendMsg();
+});
 function save(text,type){
   let data = JSON.parse(localStorage.getItem("chat")||"[]");
   data.push({text,type,time:Date.now()});
