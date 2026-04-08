@@ -16,22 +16,30 @@ body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
 #container { display:flex; flex-direction:column; height:calc(100vh - 52px); }
 .chat-planner { flex:1; overflow-y:auto; padding:10px; }
 
-#chat { flex:1; display:flex; flex-direction:column; overflow-y:auto; margin-top:10px; padding:0 10px; }
-.row {
+#chat { flex:1; display:flex; flex-direction:column; overflow-y:auto; margin-top:10px; padding:0 .row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  margin: 6px 0;
 }
 
+.msg {
+  max-width: 65%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+/* 내 메시지 */
 .me {
-  background:linear-gradient(135deg,#FFCBD9,#FF97B3);
-  color:white;
-  align-self:flex-end;
+  margin-left: auto;
+  background: linear-gradient(135deg,#FFCBD9,#FF97B3);
+  color: white;
 }
 
+/* 상대 메시지 */
 .ai {
-  background:#f1f1f1;
-  align-self:flex-start;
+  margin-right: auto;
+  background: #f1f1f1;
 }
 .inputArea { display:flex; padding:8px; border-top:1px solid #eee; background:white; }
 input { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
@@ -118,34 +126,38 @@ function renderChat(){
     row.className='row';
     row.style.flexDirection='column';
 
-    let msg=document.createElement('div');
-    msg.className='msg '+m.type;
-    msg.innerText=m.text;
+let msg=document.createElement('div');
+msg.className='msg '+m.type;
+msg.innerText=m.text;
 
-    row.appendChild(msg);
+// 👇 여기 추가
+let bubbleWrap = document.createElement('div');
+bubbleWrap.style.display='flex';
+bubbleWrap.style.flexDirection='column';
+
+bubbleWrap.appendChild(msg);
+
+// 기존 row.appendChild(msg); 대신 이걸로
+row.appendChild(bubbleWrap);
 
     // 읽음 표시
     if(m.type==='me' && i===lastMeIndex){
-      let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
+  let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
 
-      if(nextAI && !isTyping){ // 타이핑 중이면 읽음 숨김
-        const diff = nextAI.time - m.time;
-        const readText = getReadText(diff);
+  if(nextAI && !isTyping){
+    const diff = nextAI.time - m.time;
+    const readText = getReadText(diff);
 
-        let read = document.createElement('div');
-        read.innerText = readText;
-        read.style.fontSize='11px';
-        read.style.color='#999';
-        read.style.marginTop='2px';
-        read.style.alignSelf='flex-end';
+    let read = document.createElement('div');
+    read.innerText = readText;
+    read.style.fontSize='11px';
+    read.style.color='#999';
+    read.style.marginTop='2px';
+    read.style.alignSelf='flex-end';
 
-        row.appendChild(read);
-      }
-    }
-
-    chatEl.appendChild(row);
-  });
-
+    bubbleWrap.appendChild(read); // 👈 여기로
+  }
+}
   // 타이핑 표시 ("…")
   if(isTyping){
     let typingRow = document.createElement('div');
