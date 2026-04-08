@@ -101,7 +101,7 @@ body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
 
   <div class="inputArea">
     <input id="msgInput" placeholder="메시지 보내기...">
-    <button class="sendBtn" onclick="sendMsg()">전송</button>
+    <button class="sendBtn"="sendMsg()">전송</button>
   </div>
 </div>
 
@@ -473,4 +473,26 @@ function createSectorBox(type){
     box.appendChild(content);
     return box;
 }
+  document.addEventListener("DOMContentLoaded", ()=>{
+  // 전송 버튼
+  const sendBtn = document.querySelector('.sendBtn');
+  if(sendBtn){
+    sendBtn.addEventListener('click', sendMsg);
+  }
+
+  // + 버튼
+  const addBtn = document.getElementById('addTodayBtn');
+  if(addBtn){
+    addBtn.addEventListener('click', ()=>{
+      dmScreen.style.display='none';
+      plannerScreen.style.display='block';
+
+      const target = new Date(2026,10,19);
+      const now = new Date();
+      const diff = Math.ceil((target - now)/(1000*60*60*24));
+      dDayDisplay.innerText='D-'+diff;
+      todayDate.innerText=now.toLocaleDateString('ko-KR');
+    });
+  }
+});
 </script>
