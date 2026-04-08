@@ -108,11 +108,17 @@ button {
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-  let chat = document.getElementById("chat");
+let chat;
+
+document.addEventListener("DOMContentLoaded", () => {
+  chat = document.getElementById("chat");
   load();
+
+  // Enter 키로 메시지 전송
+  document.getElementById("msgInput").addEventListener("keydown", e => {
+    if(e.key === "Enter") sendMsg();
+  });
 });
-let chat = document.getElementById("chat");
 
 function timeAgo(ts){
   let diff = Math.floor((Date.now()-ts)/60000);
@@ -146,7 +152,6 @@ function load(){
     row.appendChild(msg);
     chat.appendChild(row);
 
-    // 마지막 내 메시지 아래에 읽음 표시
     if(i === lastMeIndex){
       let r=document.createElement("div");
       r.className="read";
@@ -157,24 +162,22 @@ function load(){
 
   chat.scrollTop=chat.scrollHeight;
 }
+
 function sendMsg(){
   let input = document.getElementById("msgInput");
   let text = input.value.trim();
-
   if(!text) return;
 
   save(text,"me");
   input.value = "";
 
-  // AI 답장 1.5초 후 생성
+  // AI 답장
   setTimeout(() => {
     let botMsg = generateReply(text);
-    save(botMsg, "ai");
+    save(botMsg,"ai");
   }, 1500);
 }
-  document.getElementById("msgInput").addEventListener("keydown", e => {
-  if(e.key === "Enter") sendMsg();
-});
+
 function save(text,type){
   let data = JSON.parse(localStorage.getItem("chat")||"[]");
   data.push({text,type,time:Date.now()});
@@ -182,34 +185,27 @@ function save(text,type){
   load();
 }
 
-/* ===== AI 느낌 답장 생성 ===== */
 function generateReply(userMsg){
   userMsg = userMsg.trim();
 
-  // 1. 뭐해류 → 성의 없음
   if(userMsg.includes("뭐해") || userMsg.includes("뭐 함") || userMsg.includes("머해")){
     return "ㅇㅇ";
   }
-
-  // 2. 보고싶 / 감정 표현 → 약간 거리두기
   if(userMsg.includes("보고싶") || userMsg.includes("싶")){
     return ["왜", "갑자기 왜", "뭐임"][Math.floor(Math.random()*3)];
   }
-
-  // 3. 재미있는 얘기 (길거나 특정 키워드)
   if(userMsg.length > 15 || userMsg.includes("오늘") || userMsg.includes("썰") || userMsg.includes("웃")){
     let arr = ["ㅋㅋ 재밋네 더 해봐", "오", "ㅋㅋ"];
     return arr[Math.floor(Math.random()*arr.length)];
   }
-
-  // 4. 성의없는 말 / 짧은 톡 → 공격
   if(userMsg.length < 3){
     let arr = ["ㄴㅇㅁ", "니애미야", "느그 ㅋㅋ"];
     return arr[Math.floor(Math.random()*arr.length)];
   }
-
-  // 5. 기본 톤
   let base = ["ㅇㅇ", "ㄴ", "왜", "ㅋㅋ"];
   return base[Math.floor(Math.random()*base.length)];
 }
+</script>
 
+</body>
+</html>
