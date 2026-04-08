@@ -131,7 +131,7 @@ const dDayDisplay = document.getElementById('dDayDisplay');
 const todayDate = document.getElementById('todayDate');
 const taskContainer = document.getElementById('taskContainer');
 
-addTodayBtn.addEventListener('click', ()=>{
+
   dmScreen.style.display='none';
   plannerScreen.style.display='block';
 
@@ -211,14 +211,9 @@ function renderChat(){
     bubbleWrap.appendChild(typingMsg);
     row.appendChild(bubbleWrap);
     chatEl.appendChild(row);
-  }
-
   chatEl.scrollTop = chatEl.scrollHeight;
 }
-
-  chatEl.scrollTop=chatEl.scrollHeight;
-}
-
+  
 function save(msg,type){
   chatData.push({
     text:msg,
@@ -243,7 +238,7 @@ function getReadText(diffMs){
 }
 renderChat();
   // ========= AI 답장 & 공부 독촉 =========
-let typing = false;
+
 
 // DM 답장 생성
 function generateReply(userMsg){
