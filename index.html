@@ -3,51 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>♡ DM & 플래너</title>
+<title>♡ 연핑크 플래너</title>
 <style>
-/* 기본 스타일 */
-body { margin:0; font-family:-apple-system; background:#fff; }
-.header { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid #eee; background:#fff; }
+body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
+.header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 16px; border-bottom:1px solid #FFCBD9; background:#fff;
+}
 .header .name { font-weight:600; font-size:16px; color:#333; }
 .header .add-today { font-weight:700; font-size:22px; color:#FFCBD9; cursor:pointer; }
 
-/* 컨테이너 */
 #container { display:flex; flex-direction:column; height:calc(100vh - 52px); }
 .chat-planner { flex:1; overflow-y:auto; padding:10px; }
 
-/* 플래너 박스 */
-.daily-task-box { background:#fff; border:2px solid #FFCBD9; border-radius:16px; padding:12px; margin:10px 0; position:relative; }
-.daily-date { color:#FFCBD9; font-size:20px; font-weight:700; margin-bottom:8px; }
-.add-sector-btn { font-weight:700; font-size:18px; color:#FFCBD9; border:none; background:none; cursor:pointer; }
-
-/* 섹터 박스 */
-.sectors-container { margin-top:8px; display:flex; flex-direction:column; gap:8px; }
-.sector-box { border-radius:12px; border:1px solid #FFCBD9; padding:8px; background:#fff; position:relative; }
-.sector-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-.sector-title { font-weight:700; font-size:16px; }
-.remove-sector { cursor:pointer; border:none; background:none; font-weight:700; color:#FFCBD9; }
-
-.sector-content input[type="number"], .sector-content input[type="text"] { width:50px; padding:4px; margin-right:4px; border:1px solid #ccc; border-radius:4px; }
-.sector-divider { border:none; height:1px; background:#FFCBD9; margin-top:6px; }
-
-/* 진행바 */
-.progress-bar { width:100%; height:8px; border:1px solid #FFCBD9; border-radius:4px; background:#fff; margin-top:4px; position:relative; }
-.progress-fill { height:100%; background:#FFCBD9; border-radius:4px 0 0 4px; width:0%; }
-.heart-btn { cursor:pointer; font-size:18px; color:#FFCBD9; font-weight:700; margin-left:8px; }
-
-/* 버튼 메뉴 */
-.sector-select-menu { display:flex; gap:6px; margin-top:6px; }
-.sector-select-menu button { flex:1; border-radius:8px; border:1px solid #FFCBD9; background:#fff; color:#FFCBD9; font-weight:700; padding:6px; cursor:pointer; }
-
-/* DM 채팅 영역 */
 #chat { flex:1; display:flex; flex-direction:column; overflow-y:auto; margin-top:10px; padding:0 10px; }
 .row { display:flex; align-items:flex-end; margin:6px 0; }
 .msg { max-width:65%; padding:10px 14px; border-radius:18px; font-size:14px; word-break:break-word; }
 .me { margin-left:auto; background:linear-gradient(135deg,#FFCBD9,#FF97B3); color:white; }
 .ai { background:#f1f1f1; }
+
 .inputArea { display:flex; padding:8px; border-top:1px solid #eee; background:white; }
 input { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
 button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20px; background:#FFCBD9; color:white; cursor:pointer; }
+
+/* 플래너 화면 기본 숨김 */
+#plannerScreen { display:none; }
+
 </style>
 </head>
 <body>
@@ -56,7 +37,7 @@ button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20p
 <div id="dmScreen">
   <div class="header">
     <div class="name">김현준</div>
-    <div class="add-today" id="addTodayBtn">+</div>
+    <div class="add-today" id="addTodayBtn">＋</div>
   </div>
 
   <div id="container">
@@ -66,12 +47,12 @@ button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20p
 
   <div class="inputArea">
     <input id="msgInput" placeholder="메시지 보내기...">
-    <button class="sendBtn">전송</button>
+    <button class="sendBtn" onclick="sendMsg()">전송</button>
   </div>
 </div>
 
 <!-- 플래너 화면 -->
-<div id="plannerScreen" style="display:none;">
+<div id="plannerScreen">
   <div class="header">
     <div id="backToDM" style="font-size:20px; font-weight:700; cursor:pointer;">&lt;</div>
     <div style="font-weight:700;">플래너</div>
@@ -82,294 +63,357 @@ button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20p
     <div id="dDayDisplay" style="font-size:28px; font-weight:700; margin-bottom:20px;"></div>
     <div id="todayDate" style="font-size:20px; color:#FFCBD9; font-weight:700; margin-bottom:10px;"></div>
     <button id="addTaskBtn" style="border:2px solid #FFCBD9; background:#fff; color:#FFCBD9; padding:10px; border-radius:12px;">할 일 추가</button>
+    <div id="taskContainer" style="margin-top:20px;"></div>
   </div>
 </div>
 
-</body>
-</html>
 <script>
-// DOM 요소 선택
+// 화면 전환
 const dmScreen = document.getElementById('dmScreen');
 const plannerScreen = document.getElementById('plannerScreen');
 const addTodayBtn = document.getElementById('addTodayBtn');
 const backToDM = document.getElementById('backToDM');
 const dDayDisplay = document.getElementById('dDayDisplay');
 const todayDate = document.getElementById('todayDate');
-const chatPlanner = document.getElementById('chatPlanner');
-const chatEl = document.getElementById('chat');
-const msgInput = document.getElementById('msgInput');
-const sendBtn = document.querySelector('.sendBtn');
+const taskContainer = document.getElementById('taskContainer');
 
-// 오늘 날짜
-const today = new Date();
-const todayStr = today.toISOString().split('T')[0];
-
-// 로컬 스토리지 초기화
-let tasksData = JSON.parse(localStorage.getItem('tasksData') || '{}');
-let chatData = JSON.parse(localStorage.getItem('chat') || '[]');
-
-// 저장 함수
-function saveData() { localStorage.setItem('tasksData', JSON.stringify(tasksData)); }
-function saveChat() { localStorage.setItem('chat', JSON.stringify(chatData)); }
-function saveChatMsg(text, type) { chatData.push({text,type,time:Date.now()}); saveChat(); renderChat(); }
-
-// DM 렌더링
-function renderChat(){
-  chatEl.innerHTML = '';
-  let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
-  chatData.forEach((m,i)=>{
-    let row = document.createElement('div');
-    row.className = 'row';
-    let msg = document.createElement('div');
-    msg.className = 'msg ' + m.type;
-    msg.innerText = m.text;
-    row.appendChild(msg);
-    chatEl.appendChild(row);
-    if(i===lastMeIndex){
-      let r = document.createElement('div');
-      r.className = 'read';
-      r.innerText = '읽음';
-      chatEl.appendChild(r);
-    }
-  });
-  chatEl.scrollTop = chatEl.scrollHeight;
-}
-
-// DM 메시지 전송
-sendBtn.addEventListener('click', ()=>{
-  let text = msgInput.value.trim();
-  if(!text) return;
-  saveChatMsg(text,'me');
-  msgInput.value='';
-});
-
-// DM → 플래너 전환
 addTodayBtn.addEventListener('click', ()=>{
-  dmScreen.style.display = 'none';
-  plannerScreen.style.display = 'block';
+  dmScreen.style.display='none';
+  plannerScreen.style.display='block';
 
-  // D-day 계산 (2026년 11월 19일)
-  const target = new Date(2026,10,19); // 0~11
-  const diff = Math.ceil((target - new Date())/(1000*60*60*24));
-  dDayDisplay.innerText = 'D-' + diff;
-  todayDate.innerText = today.toLocaleDateString('ko-KR');
-
-  // 오늘 데이터 초기화
-  if(!tasksData[todayStr]) tasksData[todayStr] = [];
-  renderDailyTask();
+  const target = new Date(2026,10,19);
+  const now = new Date();
+  const diff = Math.ceil((target - now)/(1000*60*60*24));
+  dDayDisplay.innerText='D-'+diff;
+  todayDate.innerText=now.toLocaleDateString('ko-KR');
 });
 
-// 플래너 → DM 전환
 backToDM.addEventListener('click', ()=>{
-  plannerScreen.style.display = 'none';
-  dmScreen.style.display = 'block';
+  plannerScreen.style.display='none';
+  dmScreen.style.display='block';
 });
 
-// 오늘 할 일 렌더링 (기본 박스)
-function renderDailyTask(){
-  chatPlanner.innerHTML = '';
-  const box = document.createElement('div');
-  box.className = 'daily-task-box';
-  box.innerHTML = `<div class="daily-date">${today.toLocaleDateString('ko-KR')}</div>`;
-  chatPlanner.appendChild(box);
-}
+// DM 채팅 기본
+const chatEl = document.getElementById('chat');
+let chatData = JSON.parse(localStorage.getItem('chat')||'[]');
+let isTyping = false;
+function renderChat(){
+  chatEl.innerHTML='';
 
-// 초기 렌더
-renderChat();
-</script>
-<script>
-// 섹터 박스 생성
-function createSectorBox(type, data){
-  const box = document.createElement('div');
-  box.className = 'sector-box';
+  let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
 
-  // 헤더
-  const header = document.createElement('div');
-  header.className = 'sector-header';
-  const title = document.createElement('div');
-  title.className = 'sector-title';
-  title.innerText = type==='video'?'영상 시청':type==='concept'?'개념 정리':'문풀';
-  const removeBtn = document.createElement('button');
-  removeBtn.className='remove-sector';
-  removeBtn.innerText='x';
-  removeBtn.addEventListener('click',()=>box.remove());
-  header.appendChild(title);
-  header.appendChild(removeBtn);
-  box.appendChild(header);
+  chatData.forEach((m,i)=>{
+    let row=document.createElement('div');
+    row.className='row';
+    row.style.flexDirection='column';
 
-  // 내용
-  const content = document.createElement('div');
-  content.className='sector-content';
+    let msg=document.createElement('div');
+    msg.className='msg '+m.type;
+    msg.innerText=m.text;
 
-  if(type==='video'){
-    content.innerHTML=`
-      <label>총 영상 길이:</label>
-      <input type="number" min="0" placeholder="시간">시간
-      <input type="number" min="0" placeholder="분">분
-      <input type="number" min="0" placeholder="초">초
-      <br>
-      <label>현재 시청:</label>
-      <input type="number" min="0" placeholder="시간">시간
-      <input type="number" min="0" placeholder="분">분
-      <input type="number" min="0" placeholder="초">초
-      <div class="progress-bar"><div class="progress-fill"></div></div>
-      <span class="heart-btn">♡</span>
-    `;
-    const heart = content.querySelector('.heart-btn');
-    const progress = content.querySelector('.progress-fill');
-    heart.addEventListener('click', ()=>{
-      progress.style.width='100%';
-      heart.innerText='♥';
-    });
-  }
+    row.appendChild(msg);
 
-  if(type==='concept'){
-    content.innerHTML=`
-      <label>완료 체크</label>
-      <input type="checkbox">
-      <hr class="sector-divider">
-    `;
-  }
+    // 읽음 표시
+    if(m.type==='me' && i===lastMeIndex){
+      let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
 
-  if(type==='problem'){
-    content.innerHTML=`
-      <label>문제집 이름:</label>
-      <input type="text" placeholder="책 이름">
-      <br>
-      <label>페이지수(n1~n2) 또는 문제수(n):</label>
-      <input type="text" placeholder="예: 1~20p 또는 30문항">
-      <div class="progress-bar"><div class="progress-fill"></div></div>
-      <span class="heart-btn">♡</span>
-    `;
-    const heart = content.querySelector('.heart-btn');
-    const progress = content.querySelector('.progress-fill');
-    heart.addEventListener('click', ()=>{
-      progress.style.width='100%';
-      heart.innerText='♥';
-    });
-  }
+      if(nextAI && !isTyping){ // 타이핑 중이면 읽음 숨김
+        const diff = nextAI.time - m.time;
+        const readText = getReadText(diff);
 
-  box.appendChild(content);
-  const hr = document.createElement('hr');
-  hr.className='sector-divider';
-  box.appendChild(hr);
+        let read = document.createElement('div');
+        read.innerText = readText;
+        read.style.fontSize='11px';
+        read.style.color='#999';
+        read.style.marginTop='2px';
+        read.style.alignSelf='flex-end';
 
-  return box;
-}
+        row.appendChild(read);
+      }
+    }
 
-// 오늘 할 일 박스 생성 및 섹터 선택
-function renderDailyTask(){
-  chatPlanner.innerHTML='';
-  const box = document.createElement('div');
-  box.className='daily-task-box';
-  box.innerHTML=`<div class="daily-date">${today.toLocaleDateString('ko-KR')}</div>`;
-  const addSectorBtn = document.createElement('button');
-  addSectorBtn.className='add-sector-btn';
-  addSectorBtn.innerText='+ 섹터 추가';
-  box.appendChild(addSectorBtn);
-  const sectorsContainer = document.createElement('div');
-  sectorsContainer.className='sectors-container';
-  box.appendChild(sectorsContainer);
-
-  // 섹터 선택 메뉴
-  const sectorMenu = document.createElement('div');
-  sectorMenu.className='sector-select-menu';
-  const types = ['영상 시청','개념 정리','문풀'];
-  types.forEach(t=>{
-    const btn = document.createElement('button');
-    btn.innerText = t;
-    btn.addEventListener('click',()=>{
-      const type = t==='영상 시청'?'video':t==='개념 정리'?'concept':'problem';
-      const secBox = createSectorBox(type,{});
-      sectorsContainer.appendChild(secBox);
-      sectorMenu.remove();
-    });
-    sectorMenu.appendChild(btn);
+    chatEl.appendChild(row);
   });
 
-  addSectorBtn.addEventListener('click',()=>{
-    if(!box.querySelector('.sector-select-menu')) box.appendChild(sectorMenu);
-  });
+  // 타이핑 표시 ("…")
+  if(isTyping){
+    let typingRow = document.createElement('div');
+    typingRow.className='row';
 
-  chatPlanner.appendChild(box);
-}
+    let typingMsg = document.createElement('div');
+    typingMsg.className='msg ai';
+    typingMsg.innerText='...';
 
-// 초기 렌더
-renderDailyTask();
-</script>
-<script>
-// 읽음 표시
-function updateReadStatus(){
-  const rows = chatEl.querySelectorAll('.row');
-  if(rows.length===0) return;
-  const lastMe = Array.from(rows).reverse().find(r=>r.querySelector('.me'));
-  if(lastMe){
-    let read = document.createElement('div');
-    read.className='read';
-    read.innerText='읽음';
-    lastMe.after(read);
+    typingRow.appendChild(typingMsg);
+    chatEl.appendChild(typingRow);
   }
+
+  chatEl.scrollTop=chatEl.scrollHeight;
 }
 
-// AI 답장 생성
-function generateReply(userMsg){
-  userMsg = userMsg.trim();
-  if(userMsg.includes('뭐해')||userMsg.includes('뭐 함')||userMsg.includes('머해')) return 'ㅇㅇ';
-  if(userMsg.includes('보고싶')||userMsg.includes('싶')) return ['왜','갑자기 왜','뭐임'][Math.floor(Math.random()*3)];
-  if(userMsg.length>15||userMsg.includes('오늘')||userMsg.includes('썰')||userMsg.includes('웃')) return ['ㅋㅋ 재밋네 더 해봐','오','ㅋㅋ'][Math.floor(Math.random()*3)];
-  if(userMsg.length<3) return ['ㄴㅇㅁ','니애미야','느그 ㅋㅋ'][Math.floor(Math.random()*3)];
-  return ['ㅇㅇ','ㄴ','왜','ㅋㅋ'][Math.floor(Math.random()*4)];
-}
-
-// DM 답장 지연
-function replyWithDelay(userMsg){
-  const minMs = 60*1000;       // 최소 1분
-  const maxMs = 2*60*60*1000;  // 최대 2시간
-  const delay = Math.random()*(maxMs - minMs) + minMs;
-
-  setTimeout(()=>{
-    const botMsg = generateReply(userMsg);
-    saveChatMsg(botMsg,'ai');
-    updateReadStatus();
-  }, delay);
-}
-
-// DM 전송 버튼에 AI 답장 연결
-sendBtn.addEventListener('click', ()=>{
-  let text = msgInput.value.trim();
-  if(!text) return;
-  saveChatMsg(text,'me');
-  msgInput.value='';
-  updateReadStatus();
-  replyWithDelay(text);
-});
-
-// 공부 독촉 AI
-function studyReminder(){
-  const todayTasks = tasksData[todayStr] || [];
-  const total = todayTasks.length;
-  const completed = todayTasks.filter(t => t.completed).length;
-
-  if(total===0) return;
-  if(completed>=Math.ceil(total/2)) return;
-
-  const msgs = ['공부좀햇냐','오늘 얼마나함','너 공부안하면 연락안함','ㅗ','연락 ㄴ',
-                '나랑 결혼한다매 그럼 공부 잘해야지','너 고3아니냐 어케 나보다 공부를 덜함',
-                '니 지방대갈거냐','수의대간다매 공부를 왤케안해','니 공부 안하면 정떨림','할거 다 할때까지 연락 ㄴ'];
-  const msg = msgs[Math.floor(Math.random()*msgs.length)];
-  saveChatMsg(msg,'ai');
-  updateReadStatus();
-
-  const minMs = 77*60*1000;  // 1시간 17분
-  const maxMs = 3*60*60*1000; // 3시간
-  const delay = Math.random()*(maxMs - minMs) + minMs;
-
-  setTimeout(studyReminder, delay);
-}
-
-// 페이지 로드 시 실행
-document.addEventListener('DOMContentLoaded',()=>{
+function save(msg,type){
+  chatData.push({
+    text:msg,
+    type:type,
+    time:Date.now()
+  });
+  localStorage.setItem('chat',JSON.stringify(chatData));
   renderChat();
-  studyReminder();
+}
+function sendMsg(){
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if(!text) return;
+  save(text,'me');
+  input.value='';
+}
+function getReadText(diffMs){
+  if(diffMs <= 10000) return '방금 전 읽음';
+
+  const minutes = Math.floor(diffMs / (1000*60));
+  const hours = Math.floor(diffMs / (1000*60*60));
+
+  if(diffMs < 60*60*1000){
+    return minutes + '분 전 읽음';
+  } else {
+    return hours + '시간 전 읽음';
+  }
+}
+renderChat();
+  // ========= AI 답장 & 공부 독촉 =========
+<script>
+let typing = false;
+
+// DM 답장 생성
+function generateReply(userMsg){
+    userMsg = userMsg.trim();
+    if(userMsg.includes('뭐해')||userMsg.includes('뭐 함')||userMsg.includes('머해')) return 'ㅇㅇ';
+    if(userMsg.includes('보고싶')||userMsg.includes('싶')) return ['왜','갑자기 왜','뭐임'][Math.floor(Math.random()*3)];
+    if(userMsg.length>15||userMsg.includes('오늘')||userMsg.includes('썰')||userMsg.includes('웃')) return ['ㅋㅋ 재밋네 더 해봐','오','ㅋㅋ'][Math.floor(Math.random()*3)];
+    if(userMsg.length<3) return ['ㄴㅇㅁ','니애미야','느그 ㅋㅋ'][Math.floor(Math.random()*3)];
+    return ['ㅇㅇ','ㄴ','왜','ㅋㅋ'][Math.floor(Math.random()*4)];
+}
+
+// DM에 답장 추가
+function reply(userMsg){
+    const botMsg = generateReply(userMsg);
+    save(botMsg,'ai');
+}
+
+// 랜덤 텀으로 답장
+function replyWithDelay(userMsg){
+    const minMs = 60*1000;       // 최소 1분
+    const maxMs = 2*60*60*1000;  // 최대 2시간
+    const delay = Math.random()*(maxMs - minMs) + minMs;
+    setTimeout(()=>reply(userMsg), delay);
+}
+
+// DM 메시지 보내기와 자동 답장
+function sendMsg(){
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if(!text) return;
+    save(text,'me');
+    input.value='';
+    replyWithDelay(text); // 랜덤 텀 답장
+}
+
+// ========= 공부 독촉 AI =========
+function studyReminder(){
+    // 오늘 플래너 tasks 불러오기
+    const todayStr = new Date().toISOString().split('T')[0];
+    let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
+    const todayTasks = tasksData[todayStr] || [];
+    const total = todayTasks.length;
+    const completed = todayTasks.filter(t => t.completed).length;
+
+    if(total===0 || completed>=Math.ceil(total/2)) return; // 할 일 없거나 반 이상 완료시 종료
+
+    const msgs = [
+        '공부좀햇냐','오늘 얼마나함','너 공부안하면 연락안함','ㅗ','연락 ㄴ',
+        '나랑 결혼한다매 그럼 공부 잘해야지','너 고3아니냐 어케 나보다 공부를 덜함',
+        '니 지방대갈거냐','수의대간다매 공부를 왤케안해','니 공부 안하면 정떨임','할거 다 할때까지 연락 ㄴ'
+    ];
+    const msg = msgs[Math.floor(Math.random()*msgs.length)];
+    save(msg,'ai');
+
+    // 다음 독촉 랜덤 시간: 1시간17분 ~ 3시간
+    const minMs = 77*60*1000;
+    const maxMs = 3*60*60*1000;
+    const delay = Math.random()*(maxMs - minMs) + minMs;
+
+    setTimeout(studyReminder, delay);
+}
+
+// ========= 초기 로드 =========
+document.addEventListener("DOMContentLoaded", ()=>{
+    renderChat(); // 기존 채팅 렌더
+    studyReminder(); // 공부 독촉 시작
 });
+</script>
+</script>
+  <script>
+// ========= 플래너 섹션 데이터 =========
+let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
+const todayStr = new Date().toISOString().split('T')[0];
+
+const addTaskBtn = document.getElementById('addTaskBtn');
+
+// 할 일 섹션 생성
+function createDailyTaskSection(date){
+    const box = document.createElement('div');
+    box.className = 'daily-task-box';
+    box.style.border = '2px solid #FFCBD9';
+    box.style.borderRadius = '16px';
+    box.style.padding = '12px';
+    box.style.marginBottom = '12px';
+
+    // 날짜 표시
+    const dateEl = document.createElement('div');
+    dateEl.className = 'daily-date';
+    dateEl.innerText = date;
+    box.appendChild(dateEl);
+
+    // 섹터 컨테이너
+    const sectorsContainer = document.createElement('div');
+    sectorsContainer.className = 'sectors-container';
+    box.appendChild(sectorsContainer);
+
+    // 섹터 추가 버튼
+    const addSectorBtn = document.createElement('button');
+    addSectorBtn.className = 'add-sector-btn';
+    addSectorBtn.innerText = '+ 섹터 추가';
+    box.appendChild(addSectorBtn);
+
+    addSectorBtn.addEventListener('click', ()=>{
+        showSectorMenu(sectorsContainer,date);
+    });
+
+    return box;
+}
+
+// 섹터 선택 메뉴
+function showSectorMenu(container,date){
+    const menu = document.createElement('div');
+    menu.className = 'sector-select-menu';
+    const types = ['영상 시청','개념 정리','문풀'];
+    types.forEach(t=>{
+        const btn = document.createElement('button');
+        btn.innerText = t;
+        btn.style.border='1px solid #FFCBD9';
+        btn.style.borderRadius='8px';
+        btn.style.background='#fff';
+        btn.style.color='#FFCBD9';
+        btn.style.fontWeight='700';
+        btn.style.padding='6px';
+        btn.addEventListener('click', ()=>{
+            const type = t==='영상 시청'?'video':t==='개념 정리'?'concept':'problem';
+            const secBox = createSectorBox(type);
+            container.appendChild(secBox);
+            // tasksData 저장
+            if(!tasksData[date]) tasksData[date]=[];
+            tasksData[date].push({type,data:{}});
+            localStorage.setItem('tasksData',JSON.stringify(tasksData));
+            menu.remove();
+        });
+        menu.appendChild(btn);
+    });
+    container.appendChild(menu);
+}<script>
+  <script>
+// 문풀 섹터 생성 업데이트
+function createSectorBox(type){
+    const box = document.createElement('div');
+    box.className='sector-box';
+    box.style.border='1px solid #FFCBD9';
+    box.style.borderRadius='12px';
+    box.style.padding='8px';
+    box.style.marginBottom='8px';
+
+    // 헤더
+    const header = document.createElement('div');
+    header.className='sector-header';
+    header.style.display='flex';
+    header.style.justifyContent='space-between';
+    header.style.alignItems='center';
+
+    const title = document.createElement('div');
+    title.className='sector-title';
+    title.innerText = type==='video'?'영상 시청':type==='concept'?'개념 정리':'문풀';
+    title.style.fontWeight='700';
+    header.appendChild(title);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.innerText='x';
+    removeBtn.style.border='none';
+    removeBtn.style.background='none';
+    removeBtn.style.color='#FFCBD9';
+    removeBtn.style.fontWeight='700';
+    removeBtn.style.cursor='pointer';
+    removeBtn.addEventListener('click',()=>box.remove());
+    header.appendChild(removeBtn);
+
+    box.appendChild(header);
+
+    // 내용
+    const content = document.createElement('div');
+    content.className='sector-content';
+    content.style.marginTop='6px';
+
+    if(type==='video'){
+        content.innerHTML=`
+            <div style="font-weight:700;">영상 제목</div>
+            <div style="font-size:12px; color:#FFCBD9;">총 길이</div>
+            <input type="number" min="0" placeholder="시간" style="width:40px">시간
+            <input type="number" min="0" placeholder="분" style="width:40px">분
+            <input type="number" min="0" placeholder="초" style="width:40px">초
+            <br>
+            <div style="font-size:12px; color:#FFCBD9;">현재 시청</div>
+            <input type="number" min="0" placeholder="시간" style="width:40px">시간
+            <input type="number" min="0" placeholder="분" style="width:40px">분
+            <input type="number" min="0" placeholder="초" style="width:40px">초
+            <div class="progress-bar" style="width:100%;height:8px;border:1px solid #FFCBD9;border-radius:4px;margin-top:4px;position:relative;">
+                <div class="progress-fill" style="height:100%;background:#FFCBD9;border-radius:4px 0 0 4px;width:0%;"></div>
+            </div>
+            <span class="heart-btn" style="cursor:pointer;font-size:18px;color:#FFCBD9;font-weight:700;margin-left:8px;">♡</span>
+        `;
+        const heart = content.querySelector('.heart-btn');
+        const progress = content.querySelector('.progress-fill');
+        heart.addEventListener('click',()=>{
+            progress.style.width='100%';
+            heart.innerText='♥';
+        });
+    }
+
+    if(type==='concept'){
+        content.innerHTML=`
+            <label>완료 체크</label>
+            <input type="checkbox">
+        `;
+    }
+
+    if(type==='problem'){ // 문풀 섹터
+        content.innerHTML=`
+            <label>문제집 이름:</label>
+            <input type="text" placeholder="책 이름">
+            <br>
+            <label>페이지(n1~n2) 또는 문제(n):</label>
+            <input type="text" placeholder="예: 1~20p 또는 30문항">
+            <div class="progress-bar" style="width:100%;height:8px;border:1px solid #FFCBD9;border-radius:4px;margin-top:4px;position:relative;">
+                <div class="progress-fill" style="height:100%;background:#FFCBD9;border-radius:4px 0 0 4px;width:0%;"></div>
+            </div>
+            <span class="heart-btn" style="cursor:pointer;font-size:18px;color:#FFCBD9;font-weight:700;margin-left:8px;">♡</span>
+        `;
+        const heart = content.querySelector('.heart-btn');
+        const progress = content.querySelector('.progress-fill');
+        heart.addEventListener('click',()=>{
+            progress.style.width='100%';
+            heart.innerText='♥';
+        });
+    }
+
+    box.appendChild(content);
+    return box;
+}
+</script>
 </script>
