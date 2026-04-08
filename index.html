@@ -2,87 +2,188 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Fake DM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DM</title>
 <style>
-body { font-family: sans-serif; background:#fafafa; }
-#chat { max-width:400px; margin:20px auto; border:1px solid #ddd; padding:10px; height:500px; overflow-y:auto; background:white; }
-.msg { margin:5px 0; }
-.me { text-align:right; }
-.ai { text-align:left; color:blue; }
-#inputArea { max-width:400px; margin:10px auto; display:flex; }
-input { flex:1; padding:10px; }
-button { padding:10px; }
-#tasks { max-width:400px; margin:10px auto; }
+body { margin:0; font-family:-apple-system; background:#fff; }
+
+.header {
+  display:flex; align-items:center;
+  padding:10px; border-bottom:1px solid #eee;
+}
+.header img {
+  width:36px; height:36px;
+  border-radius:50%; margin-right:10px;
+}
+.name { font-weight:600; font-size:15px; }
+.sub { font-size:12px; color:#888; }
+
+.chat {
+  padding:10px;
+  margin-bottom:70px;
+  display:flex; flex-direction:column;
+}
+
+.row {
+  display:flex;
+  align-items:flex-end;
+  margin:6px 0;
+}
+
+.msg {
+  max-width:65%;
+  padding:10px 14px;
+  border-radius:18px;
+  font-size:14px;
+}
+
+.me {
+  margin-left:auto;
+  background:linear-gradient(135deg,#5B9CFF,#7B5CFF);
+  color:white;
+}
+
+.ai { background:#f1f1f1; }
+
+.pfp {
+  width:26px; height:26px;
+  border-radius:50%;
+  margin-right:6px;
+}
+
+.read {
+  font-size:11px;
+  color:#999;
+  margin:2px 10px;
+  text-align:right;
+}
+
+.inputArea {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  padding:8px;
+  border-top:1px solid #eee;
+  background:white;
+}
+
+input {
+  flex:1;
+  padding:10px;
+  border-radius:20px;
+  border:1px solid #ddd;
+}
+
+button {
+  margin-left:6px;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+  background:#5B9CFF;
+  color:white;
+}
 </style>
 </head>
 <body>
 
-<div id="tasks">
-  <h3>오늘 할 일</h3>
-  <label><input type="checkbox" class="task"> 공부</label><br>
-  <label><input type="checkbox" class="task"> 과제</label><br>
-  <label><input type="checkbox" class="task"> 운동</label><br>
+<div class="header">
+  <img src="pfp.jpg">
+  <div>
+    <div class="name">direct</div>
+    <div class="sub">오늘 활동 중</div>
+  </div>
 </div>
 
-<div id="chat"></div>
+<div id="chat" class="chat"></div>
 
-<div id="inputArea">
-  <input id="msgInput" placeholder="메시지 입력">
-  <button onclick="sendMsg()">보내기</button>
-</div>
-
-<div style="text-align:center;">
-  <button onclick="generateReply()" id="replyBtn" disabled>답장 받기</button>
+<div class="inputArea">
+  <input id="msgInput" placeholder="메시지 보내기...">
+  <button onclick="sendMsg()">전송</button>
 </div>
 
 <script>
 let chat = document.getElementById("chat");
 
-function loadChat() {
-  let data = JSON.parse(localStorage.getItem("chat") || "[]");
-  chat.innerHTML = "";
-  data.forEach(m => {
-    let div = document.createElement("div");
-    div.className = "msg " + m.type;
-    div.innerText = m.text;
-    chat.appendChild(div);
+function timeAgo(ts){
+  let diff = Math.floor((Date.now()-ts)/60000);
+  if(diff<1) return "방금 전";
+  if(diff<60) return diff+"분 전";
+  let h=Math.floor(diff/60);
+  return h+"시간 전";
+}
+
+function load(){
+  let data = JSON.parse(localStorage.getItem("chat")||"[]");
+  chat.innerHTML="";
+
+  let lastMeIndex = [...data].map(m=>m.type).lastIndexOf("me");
+
+  data.forEach((m,i)=>{
+    let row=document.createElement("div");
+    row.className="row";
+
+    if(m.type==="ai"){
+      let img=document.createElement("img");
+      img.src="pfp.jpg";
+      img.className="pfp";
+      row.appendChild(img);
+    }
+
+    let msg=document.createElement("div");
+    msg.className="msg "+m.type;
+    msg.innerText=m.text;
+
+    row.appendChild(msg);
+    chat.appendChild(row);
+
+    // 마지막 내 메시지 아래에 읽음 표시
+    if(i === lastMeIndex){
+      let r=document.createElement("div");
+      r.className="read";
+      r.innerText="읽음 · "+timeAgo(m.time);
+      chat.appendChild(r);
+    }
   });
-}
-loadChat();
 
-function saveMsg(text, type) {
-  let data = JSON.parse(localStorage.getItem("chat") || "[]");
-  data.push({text, type});
-  localStorage.setItem("chat", JSON.stringify(data));
-  loadChat();
+  chat.scrollTop=chat.scrollHeight;
 }
 
-function sendMsg() {
-  let input = document.getElementById("msgInput");
-  if (!input.value) return;
-  saveMsg(input.value, "me");
-  input.value = "";
+function save(text,type){
+  let data = JSON.parse(localStorage.getItem("chat")||"[]");
+  data.push({text,type,time:Date.now()});
+  localStorage.setItem("chat",JSON.stringify(data));
+  load();
 }
 
-document.querySelectorAll(".task").forEach(cb => {
-  cb.addEventListener("change", () => {
-    let allDone = [...document.querySelectorAll(".task")].every(c => c.checked);
-    document.getElementById("replyBtn").disabled = !allDone;
-  });
-});
+/* ===== AI 느낌 답장 생성 ===== */
+function generateReply(userMsg){
+  userMsg = userMsg.trim();
 
-function generateReply() {
-  let replies = [
-    "ㅇㅇ 나중에 보자",
-    "지금 좀 바빠",
-    "왜?",
-    "ㅋㅋ",
-    "나중에 연락할게"
-  ];
-  let r = replies[Math.floor(Math.random()*replies.length)];
-  saveMsg(r, "ai");
+  // 1. 뭐해류 → 성의 없음
+  if(userMsg.includes("뭐해") || userMsg.includes("뭐 함") || userMsg.includes("머해")){
+    return "ㅇㅇ";
+  }
+
+  // 2. 보고싶 / 감정 표현 → 약간 거리두기
+  if(userMsg.includes("보고싶") || userMsg.includes("싶")){
+    return ["왜", "갑자기 왜", "뭐임"][Math.floor(Math.random()*3)];
+  }
+
+  // 3. 재미있는 얘기 (길거나 특정 키워드)
+  if(userMsg.length > 15 || userMsg.includes("오늘") || userMsg.includes("썰") || userMsg.includes("웃")){
+    let arr = ["ㅋㅋ 재밋네 더 해봐", "오", "ㅋㅋ"];
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  // 4. 성의없는 말 / 짧은 톡 → 공격
+  if(userMsg.length < 3){
+    let arr = ["ㄴㅇㅁ", "니애미야", "느그 ㅋㅋ"];
+    return arr[Math.floor(Math.random()*arr.length)];
+  }
+
+  // 5. 기본 톤
+  let base = ["ㅇㅇ", "ㄴ", "왜", "ㅋㅋ"];
+  return base[Math.floor(Math.random()*base.length)];
 }
-</script>
-
-</body>
 </html>
