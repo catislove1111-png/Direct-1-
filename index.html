@@ -228,13 +228,7 @@ function save(msg,type){
   localStorage.setItem('chat',JSON.stringify(chatData));
   renderChat();
 }
-function sendMsg(){
-  const input = document.getElementById('msgInput');
-  const text = input.value.trim();
-  if(!text) return;
-  save(text,'me');
-  input.value='';
-}
+
 function getReadText(diffMs){
   if(diffMs <= 10000) return '방금 전 읽음';
 
