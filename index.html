@@ -54,39 +54,67 @@ body { margin:0; font-family:-apple-system; background:#fff; }
 .inputArea { display:flex; padding:8px; border-top:1px solid #eee; background:white; }
 input { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
 button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20px; background:#FFCBD9; color:white; cursor:pointer; }
-</style>
-</head>
-<body>
-<div class="header">
-  <div class="name">김현준</div>
-  <div class="add-today" id="addTodayBtn">+</div>
-</div>
-
-<div id="container">
-  <div class="chat-planner" id="chatPlanner"></div>
-  <div id="chat"></div>
-</div>
-
-<div class="inputArea">
-  <input id="msgInput" placeholder="메시지 보내기...">
-  <button class="sendBtn" onclick="sendMsg()">전송</button>
-</div>
-<body>
-  <!-- 기존 DM 헤더 + 채팅창 -->
-  <div class="header"> ... </div>
-  <div id="chat" class="chat"></div>
-
-  <!-- 플래너 화면 HTML 여기 붙임 -->
-  <div id="plannerScreen" style="display:none;">
-    <!-- 플래너 헤더, D-day, 오늘 날짜, 섹터 선택, 할일 추가 버튼 등 -->
+<!-- DM 화면 -->
+<div id="dmScreen">
+  <div class="header">
+    <div class="name">김현준</div>
+    <div class="add-today" id="addTodayBtn">+</div>
   </div>
 
-  <!-- 메시지 입력창 -->
+  <div id="container">
+    <div class="chat-planner" id="chatPlanner"></div>
+    <div id="chat"></div>
+  </div>
+
   <div class="inputArea">
     <input id="msgInput" placeholder="메시지 보내기...">
     <button class="sendBtn" onclick="sendMsg()">전송</button>
   </div>
+</div>
+
+<!-- 플래너 화면 -->
+<div id="plannerScreen" style="display:none;">
+  <div class="header">
+    <div id="backToDM" style="font-size:20px; font-weight:700; cursor:pointer;">&lt;</div>
+    <div style="font-weight:700;">플래너</div>
+    <div></div>
+  </div>
+
+  <div id="plannerContent" style="padding:20px;">
+    <div id="dDayDisplay" style="font-size:28px; font-weight:700; margin-bottom:20px;"></div>
+    <div id="todayDate" style="font-size:20px; color:#FFCBD9; font-weight:700; margin-bottom:10px;"></div>
+    <button id="addTaskBtn" style="border:2px solid #FFCBD9; background:#fff; color:#FFCBD9; padding:10px; border-radius:12px;">할 일 추가</button>
+  </div>
+</div>
+
 <script>
+const dmScreen = document.getElementById('dmScreen');
+const plannerScreen = document.getElementById('plannerScreen');
+const addTodayBtn = document.getElementById('addTodayBtn');
+const backToDM = document.getElementById('backToDM');
+const dDayDisplay = document.getElementById('dDayDisplay');
+const todayDate = document.getElementById('todayDate');
+
+addTodayBtn.addEventListener('click', () => {
+  // DM → 플래너 전환
+  dmScreen.style.display = 'none';
+  plannerScreen.style.display = 'block';
+
+  // D-day 계산
+  const target = new Date(2026,10,19); // 11월 = 10 (0~11)
+  const now = new Date();
+  const diff = Math.ceil((target - now)/(1000*60*60*24));
+  dDayDisplay.innerText = 'D-' + diff;
+
+  todayDate.innerText = now.toLocaleDateString('ko-KR');
+});
+
+backToDM.addEventListener('click', () => {
+  // 플래너 → DM 전환
+  plannerScreen.style.display = 'none';
+  dmScreen.style.display = 'block';
+});
+</script>
 // ========= 초기 세팅 =========
 const chatPlanner = document.getElementById('chatPlanner');
 const chatEl = document.getElementById('chat');
