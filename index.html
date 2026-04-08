@@ -3,230 +3,205 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Study Planner + DM</title>
+<title>(1) Instagram</title>
 <style>
-body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
-.header { display:flex; align-items:center; padding:10px; border-bottom:1px solid #eee; background:#fff; }
-.header img { width:36px; height:36px; border-radius:50%; margin-right:10px; }
-.name { font-weight:600; font-size:15px; flex:1; }
-.addTaskIcon { width:28px; height:28px; cursor:pointer; }
+  body { margin:0; font-family:-apple-system; background:#fff; }
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 16px; border-bottom:1px solid #eee; background:#fff;
+  }
+  .header .name { font-weight:600; font-size:16px; color:#333; }
+  .header .add-today { font-weight:700; font-size:18px; color:#FFCBD9; cursor:pointer; }
+  
+  .chat { padding:10px; display:flex; flex-direction:column; }
 
-#taskArea { padding:10px; }
-.chat { padding:10px; margin-bottom:70px; display:flex; flex-direction:column; }
-.row { display:flex; align-items:flex-end; margin:6px 0; }
-.msg { max-width:65%; padding:10px 14px; border-radius:18px; font-size:14px; }
-.me { margin-left:auto; background:linear-gradient(135deg,#FFC8D9,#FFA6C0); color:white; }
-.ai { background:#f1f1f1; }
-.pfp { width:26px; height:26px; border-radius:50%; margin-right:6px; }
-.read { font-size:11px; color:#999; margin:2px 10px; text-align:right; }
+  .daily-task-box {
+    background:#fff; border:2px solid #FFCBD9; border-radius:16px; padding:12px;
+    margin:10px 0; position:relative;
+  }
+  .daily-date { color:#FFCBD9; font-size:20px; font-weight:700; margin-bottom:8px; }
+  .add-sector-btn { font-weight:700; font-size:18px; color:#FFCBD9; border:none; background:none; cursor:pointer; }
+  
+  .sectors-container { margin-top:8px; }
 
-.inputArea { position:fixed; bottom:0; width:100%; display:flex; padding:8px; border-top:1px solid #eee; background:white; }
-input#msgInput { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
-button, .sendBtn { margin-left:6px; cursor:pointer; border:none; border-radius:20px; background:#FFC8D9; color:white; width:48px; height:48px; object-fit:contain; }
+  .sector-box {
+    border-radius:12px; border:1px solid #FFCBD9; padding:8px; margin-top:10px; position:relative;
+    background:#fff;
+  }
+  .sector-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .sector-title { font-weight:700; font-size:16px; }
+  .remove-sector { cursor:pointer; border:none; background:none; font-weight:700; color:#FFCBD9; }
 
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,200,217,0.95); overflow:auto; padding:20px; box-sizing:border-box; }
-.modalHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-.modalHeader h1 { font-size:2em; font-weight:bold; }
-.closeModal { cursor:pointer; font-size:1.5em; font-weight:bold; }
-.addSectionBtn { display:inline-block; padding:6px 12px; border:2px solid #FFC8D9; border-radius:12px; cursor:pointer; margin-bottom:20px; }
+  .sector-content input[type="number"], .sector-content input[type="text"] {
+    width:50px; padding:4px; margin-right:4px; border:1px solid #ccc; border-radius:4px;
+  }
 
-.section { border:1px solid #FFC8D9; border-radius:12px; padding:12px; margin-bottom:16px; background:#fff; }
-.sectionDate { font-weight:bold; margin-bottom:4px; }
-.separator { height:2px; background:#FFC8D9; margin:4px 0; }
+  .sector-divider { border:none; height:1px; background:#FFCBD9; margin-top:6px; }
 
-.videoTask, .conceptTask, .problemTask { margin:8px 0; padding:6px; border-radius:8px; border:1px solid #FFC8D9; background:#fff; }
-.videoTitle, .problemTitle, .conceptTitle { font-weight:bold; }
-.videoLength, .problemLength { font-size:12px; color:#FFB0C2; margin:2px 0; }
-.progressContainer { height:8px; border:1px solid #FFC8D9; border-radius:4px; background:#fff; margin-top:4px; }
-.progressBar { height:100%; width:0%; background:#FFC8D9; border-radius:4px; }
-.heartBtn { cursor:pointer; font-size:18px; color:#FFC8D9; margin-left:6px; }
+  .progress-bar {
+    width:100%; height:8px; border:1px solid #FFCBD9; border-radius:4px; background:#fff; margin-top:4px;
+    position:relative;
+  }
+  .progress-fill {
+    height:100%; background:#FFCBD9; border-radius:4px 0 0 4px; width:0%;
+  }
+  .heart-btn { cursor:pointer; font-size:18px; color:#FFCBD9; font-weight:700; margin-left:8px; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <img src="pfp.jpg">
   <div class="name">김현준</div>
-  <div class="addTaskIcon" onclick="openModal()">📋</div>
+  <div class="add-today" id="addTodayBtn">+</div>
 </div>
 
-<div id="chat" class="chat"></div>
-
-<div class="inputArea">
-  <input id="msgInput" placeholder="메시지 보내기...">
-  <img src="send.png" class="sendBtn" onclick="sendMsg()">
-</div>
-
-<div id="taskModal" class="modal">
-  <div class="modalHeader">
-    <h1 id="dDayText">D-??</h1>
-    <div class="closeModal" onclick="closeModal()">✖</div>
-  </div>
-  <div id="todayLabel" style="font-weight:bold; margin-bottom:12px;">오늘: --월 --일</div>
-  <div class="addSectionBtn" onclick="addSection()">할 일 추가</div>
-  <div id="sectionsContainer"></div>
-</div>
+<div class="chat" id="chat"></div>
 
 <script>
-let chat = document.getElementById("chat");
-let sectionsContainer = document.getElementById("sectionsContainer");
-let sections = [];
-let sentMsgs = new Set();
-let studyMsgs = ["넌 공부 안하냐","공부좀해","너 공부안하면 연락안함","ㅗ","연락 ㄴ","왜 아직 안했냐","좀 하자"];
+const chat = document.getElementById('chat');
+const addTodayBtn = document.getElementById('addTodayBtn');
+const todayStr = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+const DDAY = new Date('2026-11-19');
 
-function openModal(){
-  document.getElementById("taskModal").style.display="block";
-  updateDDay();
-  updateToday();
-}
-function closeModal(){ document.getElementById("taskModal").style.display="none"; }
-
-function updateDDay(){
-  const now = new Date();
-  const target = new Date(2026,10,19);
-  const diff = Math.ceil((target - now)/(1000*60*60*24));
-  document.getElementById("dDayText").innerText = `D-${diff}`;
+function daysUntil(target){
+  const diff = target - new Date();
+  return Math.ceil(diff / (1000*60*60*24));
 }
 
-function updateToday(){
-  const now = new Date();
-  document.getElementById("todayLabel").innerText = `오늘: ${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+// 체크 저장용
+let tasksData = JSON.parse(localStorage.getItem('tasksData') || '{}');
+
+function saveData(){
+  localStorage.setItem('tasksData', JSON.stringify(tasksData));
 }
 
-function addSection(){
-  const now = new Date();
-  const section = {date:`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`, videos:[], concepts:[], problems:[]};
-  sections.push(section);
-  renderSections();
+function renderDailyTask(){
+  chat.innerHTML = '';
+  if(!tasksData[todayStr]){
+    addTodayBtn.disabled = false;
+  } else {
+    addTodayBtn.disabled = true;
+    const box = createDailyTaskBox(todayStr);
+    chat.appendChild(box);
+  }
 }
 
-function renderSections(){
-  sectionsContainer.innerHTML="";
-  sections.forEach((s,i)=>{
-    const secDiv = document.createElement("div");
-    secDiv.className="section";
+function createDailyTaskBox(date){
+  const box = document.createElement('div');
+  box.className = 'daily-task-box';
+  const dateDiv = document.createElement('div');
+  dateDiv.className = 'daily-date';
+  const ddayCount = daysUntil(DDAY);
+  dateDiv.innerText = `${date} · D-${ddayCount}`;
+  box.appendChild(dateDiv);
 
-    const dateDiv = document.createElement("div");
-    dateDiv.className="sectionDate";
-    dateDiv.innerText=s.date;
-    secDiv.appendChild(dateDiv);
+  const addSectorBtn = document.createElement('button');
+  addSectorBtn.className = 'add-sector-btn';
+  addSectorBtn.innerText = '+';
+  box.appendChild(addSectorBtn);
 
-    const separator = document.createElement("div");
-    separator.className="separator";
-    secDiv.appendChild(separator);
+  const sectorsContainer = document.createElement('div');
+  sectorsContainer.className = 'sectors-container';
+  box.appendChild(sectorsContainer);
 
-    // 영상 섹터
-    const videoDiv = document.createElement("div"); videoDiv.className="videoTask";
-    const videoTitleInput = document.createElement("input"); videoTitleInput.placeholder="영상 제목";
-    videoDiv.appendChild(videoTitleInput);
-
-    const timeContainer = document.createElement("div"); timeContainer.style.display="flex"; timeContainer.style.alignItems="center"; timeContainer.style.marginTop="4px";
-    const hourInput = document.createElement("input"); hourInput.type="number"; hourInput.min=0; hourInput.placeholder="시간"; hourInput.style.width="40px";
-    const minInput = document.createElement("input"); minInput.type="number"; minInput.min=0; minInput.placeholder="분"; minInput.style.width="40px";
-    const secInput = document.createElement("input"); secInput.type="number"; secInput.min=0; secInput.placeholder="초"; secInput.style.width="40px";
-    timeContainer.appendChild(hourInput); timeContainer.appendChild(minInput); timeContainer.appendChild(secInput);
-    videoDiv.appendChild(timeContainer);
-
-    const watchedContainer = document.createElement("div"); watchedContainer.style.display="flex"; watchedContainer.style.alignItems="center"; watchedContainer.style.marginTop="4px";
-    const watchedHour = document.createElement("input"); watchedHour.type="number"; watchedHour.min=0; watchedHour.placeholder="시"; watchedHour.style.width="40px";
-    const watchedMin = document.createElement("input"); watchedMin.type="number"; watchedMin.min=0; watchedMin.placeholder="분"; watchedMin.style.width="40px";
-    const watchedSec = document.createElement("input"); watchedSec.type="number"; watchedSec.min=0; watchedSec.placeholder="초"; watchedSec.style.width="40px";
-    watchedContainer.appendChild(watchedHour); watchedContainer.appendChild(watchedMin); watchedContainer.appendChild(watchedSec);
-    videoDiv.appendChild(watchedContainer);
-
-    const progressContainer = document.createElement("div"); progressContainer.className="progressContainer";
-    const progressBar = document.createElement("div"); progressBar.className="progressBar";
-    progressContainer.appendChild(progressBar); videoDiv.appendChild(progressContainer);
-
-    const heart = document.createElement("span"); heart.className="heartBtn"; heart.innerText="♡";
-    heart.onclick=()=>{
-      progressBar.style.width="100%"; heart.innerText="♥";
-    }
-    videoDiv.appendChild(heart);
-
-    function updateTimeDisplay(){ const h=parseInt(hourInput.value)||0; hourInput.style.display = h===0 ? "none":"inline-block"; }
-    hourInput.oninput = updateTimeDisplay;
-
-    // 자동 퍼센트 계산
-    [watchedHour, watchedMin, watchedSec].forEach(inp=>{
-      inp.oninput = ()=>{
-        const totalSec = (parseInt(hourInput.value)||0)*3600 + (parseInt(minInput.value)||0)*60 + (parseInt(secInput.value)||0);
-        const watchedSecVal = (parseInt(watchedHour.value)||0)*3600 + (parseInt(watchedMin.value)||0)*60 + (parseInt(watchedSec.value)||0);
-        if(totalSec>0){
-          let p = Math.round((watchedSecVal/totalSec)*10000)/100;
-          progressBar.style.width = Math.min(p,100)+"%";
-        }
-      }
-    });
-
-    secDiv.appendChild(videoDiv);
-
-    // 개념정리 섹터
-    const conceptDiv = document.createElement("div"); conceptDiv.className="conceptTask";
-    const conceptInput = document.createElement("input"); conceptInput.placeholder="개념 정리";
-    const conceptCheck = document.createElement("input"); conceptCheck.type="checkbox"; conceptCheck.style.marginLeft="6px";
-    conceptDiv.appendChild(conceptInput); conceptDiv.appendChild(conceptCheck);
-    secDiv.appendChild(conceptDiv);
-
-    // 문풀 섹터
-    const problemDiv = document.createElement("div"); problemDiv.className="problemTask";
-    const problemTitleInput = document.createElement("input"); problemTitleInput.placeholder="문제집 이름";
-    problemDiv.appendChild(problemTitleInput);
-
-    const typeSelect = document.createElement("select");
-    const optionPage = document.createElement("option"); optionPage.value="page"; optionPage.innerText="페이지 수";
-    const optionNum = document.createElement("option"); optionNum.value="num"; optionNum.innerText="문항 수";
-    typeSelect.appendChild(optionPage); typeSelect.appendChild(optionNum);
-    problemDiv.appendChild(typeSelect);
-
-    const startInput = document.createElement("input"); startInput.placeholder="시작 n1"; startInput.style.width="60px";
-    const endInput = document.createElement("input"); endInput.placeholder="끝 n2"; endInput.style.width="60px"; 
-    const currentInput = document.createElement("input"); currentInput.placeholder="진행 x"; currentInput.style.width="60px";
-    problemDiv.appendChild(startInput); problemDiv.appendChild(endInput); problemDiv.appendChild(currentInput);
-
-    const progressContainerP = document.createElement("div"); progressContainerP.className="progressContainer";
-    const progressBarP = document.createElement("div"); progressBarP.className="progressBar";
-    progressContainerP.appendChild(progressBarP); problemDiv.appendChild(progressContainerP);
-
-    const heartP = document.createElement("span"); heartP.className="heartBtn"; heartP.innerText="♡";
-    heartP.onclick=()=>{
-      progressBarP.style.width="100%"; heartP.innerText="♥";
-    }
-    problemDiv.appendChild(heartP);
-
-    currentInput.oninput=()=>{
-      const x=parseFloat(currentInput.value)||0;
-      if(typeSelect.value==="page"){
-        const n1=parseFloat(startInput.value)||0;
-        const n2=parseFloat(endInput.value)||0;
-        if(n2>n1){ let p=Math.round(((x-n1+1)/(n2-n1+1))*10000)/100; progressBarP.style.width=p+"%"; }
-      } else {
-        const n=parseFloat(endInput.value)||0;
-        if(n>0){ let p=Math.round((x/n)*10000)/100; progressBarP.style.width=p+"%"; }
-      }
-    }
-
-    secDiv.appendChild(problemDiv);
-    sectionsContainer.appendChild(secDiv);
+  // 섹터 추가
+  addSectorBtn.addEventListener('click', ()=>{
+    const type = prompt('섹터 선택: video, concept, problem');
+    if(!type) return;
+    const sectorBox = createSectorBox(type);
+    sectorsContainer.appendChild(sectorBox);
+    if(!tasksData[date]) tasksData[date] = [];
+    tasksData[date].push({type, data:{}});
+    saveData();
   });
+
+  return box;
 }
 
-// DM 채팅
-function timeAgo(ts){ let diff = Math.floor((Date.now()-ts)/60000); if(diff<1) return "방금 전"; if(diff<60) return diff+"분 전"; let h=Math.floor(diff/60); return h+"시간 전"; }
-function load(){ let data=JSON.parse(localStorage.getItem("chat")||"[]"); chat.innerHTML=""; let lastMeIndex=[...data].map(m=>m.type).lastIndexOf("me"); data.forEach((m,i)=>{ let row=document.createElement("div"); row.className="row"; if(m.type==="ai"){ let img=document.createElement("img"); img.src="pfp.jpg"; img.className="pfp"; row.appendChild(img);} let msg=document.createElement("div"); msg.className="msg "+m.type; msg.innerText=m.text; row.appendChild(msg); chat.appendChild(row); if(i===lastMeIndex){ let r=document.createElement("div"); r.className="read"; r.innerText="읽음 · "+timeAgo(m.time); chat.appendChild(r);}}); chat.scrollTop=chat.scrollHeight; }
+function createSectorBox(type){
+  const box = document.createElement('div');
+  box.className = 'sector-box';
 
-function sendMsg(){ let input=document.getElementById("msgInput"); let text=input.value.trim(); if(!text) return; save(text,"me"); input.value=""; setTimeout(()=>{ if(document.getElementById("msgInput").value.trim()==="") aiReply(text); },1500);}
-function save(text,type){ let data=JSON.parse(localStorage.getItem("chat")||"[]"); data.push({text,type,time:Date.now()}); localStorage.setItem("chat",JSON.stringify(data)); load();}
+  const header = document.createElement('div');
+  header.className = 'sector-header';
 
-// 공부 압박 메시지
-setInterval(()=>{
-  const available=studyMsgs.filter(m=>!sentMsgs.has(m));
-  if(available.length===0) sentMsgs.clear();
-  const msg=available[Math.floor(Math.random()*available.length)];
-  sentMsgs.add(msg); save(msg,"ai");
-},1000*60*5);
+  const title = document.createElement('div');
+  title.className = 'sector-title';
+  title.innerText = type==='video' ? '영상 시청' : type==='concept' ? '개념 정리' : '문풀';
 
-document.addEventListener("DOMContentLoaded",()=>{ load(); });
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'remove-sector';
+  removeBtn.innerText = 'x';
+  removeBtn.addEventListener('click', ()=>box.remove());
+
+  header.appendChild(title);
+  header.appendChild(removeBtn);
+  box.appendChild(header);
+
+  const content = document.createElement('div');
+  content.className = 'sector-content';
+  if(type==='video'){
+    content.innerHTML = `
+      <label>총 영상 길이:</label>
+      <input type="number" min="0" placeholder="시간">시간
+      <input type="number" min="0" placeholder="분">분
+      <input type="number" min="0" placeholder="초">초
+      <br>
+      <label>현재 시청:</label>
+      <input type="number" min="0" placeholder="시간">시간
+      <input type="number" min="0" placeholder="분">분
+      <input type="number" min="0" placeholder="초">초
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <span class="heart-btn">♡</span>
+    `;
+    const heart = content.querySelector('.heart-btn');
+    const progress = content.querySelector('.progress-fill');
+    heart.addEventListener('click', ()=>{
+      progress.style.width = '100%';
+      heart.innerText = '♥';
+    });
+  }
+  if(type==='concept'){
+    content.innerHTML = `
+      <label>개념 정리 완료</label>
+      <input type="checkbox">
+      <hr class="sector-divider">
+    `;
+  }
+  if(type==='problem'){
+    content.innerHTML = `
+      <label>문제집 이름:</label>
+      <input type="text" placeholder="책 이름">
+      <br>
+      <label>페이지수(n1~n2) 또는 문제수(n):</label>
+      <input type="text" placeholder="예: 1~20p 또는 30문항">
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <span class="heart-btn">♡</span>
+    `;
+    const heart = content.querySelector('.heart-btn');
+    const progress = content.querySelector('.progress-fill');
+    heart.addEventListener('click', ()=>{
+      progress.style.width = '100%';
+      heart.innerText = '♥';
+    });
+  }
+
+  box.appendChild(content);
+  const hr = document.createElement('hr');
+  hr.className = 'sector-divider';
+  box.appendChild(hr);
+
+  return box;
+}
+
+// 오늘 할 일 추가
+addTodayBtn.addEventListener('click', ()=>{
+  tasksData[todayStr] = [];
+  saveData();
+  renderDailyTask();
+});
+
+renderDailyTask();
 </script>
 </body>
 </html>
