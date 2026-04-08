@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>(1) Instagram</title>
+<title>Study Planner + DM</title>
 <style>
 body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
-.header { display:flex; align-items:center; padding:10px; border-bottom:1px solid #eee; background:#FFC8D9; }
+.header { display:flex; align-items:center; padding:10px; border-bottom:1px solid #eee; background:#fff; }
 .header img { width:36px; height:36px; border-radius:50%; margin-right:10px; }
 .name { font-weight:600; font-size:15px; flex:1; }
-.sub { font-size:12px; color:#888; }
 .addTaskIcon { width:28px; height:28px; cursor:pointer; }
 
 #taskArea { padding:10px; }
@@ -35,9 +34,9 @@ button, .sendBtn { margin-left:6px; cursor:pointer; border:none; border-radius:2
 .sectionDate { font-weight:bold; margin-bottom:4px; }
 .separator { height:2px; background:#FFC8D9; margin:4px 0; }
 
-.videoTask, .conceptTask { margin:8px 0; padding:6px; border-radius:8px; border:1px solid #FFC8D9; background:#fff; }
-.videoTitle { font-weight:bold; }
-.videoLength { font-size:12px; color:#FFB0C2; margin:2px 0; }
+.videoTask, .conceptTask, .problemTask { margin:8px 0; padding:6px; border-radius:8px; border:1px solid #FFC8D9; background:#fff; }
+.videoTitle, .problemTitle, .conceptTitle { font-weight:bold; }
+.videoLength, .problemLength { font-size:12px; color:#FFB0C2; margin:2px 0; }
 .progressContainer { height:8px; border:1px solid #FFC8D9; border-radius:4px; background:#fff; margin-top:4px; }
 .progressBar { height:100%; width:0%; background:#FFC8D9; border-radius:4px; }
 .heartBtn { cursor:pointer; font-size:18px; color:#FFC8D9; margin-left:6px; }
@@ -48,7 +47,7 @@ button, .sendBtn { margin-left:6px; cursor:pointer; border:none; border-radius:2
 <div class="header">
   <img src="pfp.jpg">
   <div class="name">김현준</div>
-  <div class="addTaskIcon" onclick="openModal()">🩷</div>
+  <div class="addTaskIcon" onclick="openModal()">📋</div>
 </div>
 
 <div id="chat" class="chat"></div>
@@ -60,9 +59,10 @@ button, .sendBtn { margin-left:6px; cursor:pointer; border:none; border-radius:2
 
 <div id="taskModal" class="modal">
   <div class="modalHeader">
-    <h1>디데이: 2026-11-19</h1>
+    <h1 id="dDayText">D-??</h1>
     <div class="closeModal" onclick="closeModal()">✖</div>
   </div>
+  <div id="todayLabel" style="font-weight:bold; margin-bottom:12px;">오늘: --월 --일</div>
   <div class="addSectionBtn" onclick="addSection()">할 일 추가</div>
   <div id="sectionsContainer"></div>
 </div>
@@ -72,13 +72,30 @@ let chat = document.getElementById("chat");
 let sectionsContainer = document.getElementById("sectionsContainer");
 let sections = [];
 let sentMsgs = new Set();
-let studyMsgs = ["넌 공부 안하냐","공부좀해","너 공부안하면 연락안함","ㅗ","연락 ㄴ","왜 아직 안했냐","좀 하자","공부 잘해서 나 먹여살린다매","너 고3아니냐","나한테 이러면서 공부도 안하는건 쫌 한심하네","공부 왜안함","니 인생 걍 놧냐"];
+let studyMsgs = ["넌 공부 안하냐","공부좀해","너 공부안하면 연락안함","ㅗ","연락 ㄴ","왜 아직 안했냐","좀 하자"];
 
-function openModal(){ document.getElementById("taskModal").style.display="block"; }
+function openModal(){
+  document.getElementById("taskModal").style.display="block";
+  updateDDay();
+  updateToday();
+}
 function closeModal(){ document.getElementById("taskModal").style.display="none"; }
 
+function updateDDay(){
+  const now = new Date();
+  const target = new Date(2026,10,19);
+  const diff = Math.ceil((target - now)/(1000*60*60*24));
+  document.getElementById("dDayText").innerText = `D-${diff}`;
+}
+
+function updateToday(){
+  const now = new Date();
+  document.getElementById("todayLabel").innerText = `오늘: ${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+}
+
 function addSection(){
-  const section = {date:"2026-11-19", videos:[], concepts:[]};
+  const now = new Date();
+  const section = {date:`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`, videos:[], concepts:[], problems:[]};
   sections.push(section);
   renderSections();
 }
@@ -99,36 +116,49 @@ function renderSections(){
     secDiv.appendChild(separator);
 
     // 영상 섹터
-    const videoDiv = document.createElement("div");
-    videoDiv.className="videoTask";
-    const videoTitleInput = document.createElement("input");
-    videoTitleInput.placeholder="영상 제목";
+    const videoDiv = document.createElement("div"); videoDiv.className="videoTask";
+    const videoTitleInput = document.createElement("input"); videoTitleInput.placeholder="영상 제목";
     videoDiv.appendChild(videoTitleInput);
 
-    const timeContainer = document.createElement("div");
-    timeContainer.style.display="flex"; timeContainer.style.alignItems="center"; timeContainer.style.marginTop="4px";
-
+    const timeContainer = document.createElement("div"); timeContainer.style.display="flex"; timeContainer.style.alignItems="center"; timeContainer.style.marginTop="4px";
     const hourInput = document.createElement("input"); hourInput.type="number"; hourInput.min=0; hourInput.placeholder="시간"; hourInput.style.width="40px";
     const minInput = document.createElement("input"); minInput.type="number"; minInput.min=0; minInput.placeholder="분"; minInput.style.width="40px";
     const secInput = document.createElement("input"); secInput.type="number"; secInput.min=0; secInput.placeholder="초"; secInput.style.width="40px";
-
-    timeContainer.appendChild(hourInput);
-    timeContainer.appendChild(minInput);
-    timeContainer.appendChild(secInput);
+    timeContainer.appendChild(hourInput); timeContainer.appendChild(minInput); timeContainer.appendChild(secInput);
     videoDiv.appendChild(timeContainer);
 
-    // 진행률
+    const watchedContainer = document.createElement("div"); watchedContainer.style.display="flex"; watchedContainer.style.alignItems="center"; watchedContainer.style.marginTop="4px";
+    const watchedHour = document.createElement("input"); watchedHour.type="number"; watchedHour.min=0; watchedHour.placeholder="시"; watchedHour.style.width="40px";
+    const watchedMin = document.createElement("input"); watchedMin.type="number"; watchedMin.min=0; watchedMin.placeholder="분"; watchedMin.style.width="40px";
+    const watchedSec = document.createElement("input"); watchedSec.type="number"; watchedSec.min=0; watchedSec.placeholder="초"; watchedSec.style.width="40px";
+    watchedContainer.appendChild(watchedHour); watchedContainer.appendChild(watchedMin); watchedContainer.appendChild(watchedSec);
+    videoDiv.appendChild(watchedContainer);
+
     const progressContainer = document.createElement("div"); progressContainer.className="progressContainer";
     const progressBar = document.createElement("div"); progressBar.className="progressBar";
-    progressContainer.appendChild(progressBar);
-    videoDiv.appendChild(progressContainer);
+    progressContainer.appendChild(progressBar); videoDiv.appendChild(progressContainer);
 
     const heart = document.createElement("span"); heart.className="heartBtn"; heart.innerText="♡";
     heart.onclick=()=>{
-      progressBar.style.width="100%";
-      heart.innerText="♥";
+      progressBar.style.width="100%"; heart.innerText="♥";
     }
     videoDiv.appendChild(heart);
+
+    function updateTimeDisplay(){ const h=parseInt(hourInput.value)||0; hourInput.style.display = h===0 ? "none":"inline-block"; }
+    hourInput.oninput = updateTimeDisplay;
+
+    // 자동 퍼센트 계산
+    [watchedHour, watchedMin, watchedSec].forEach(inp=>{
+      inp.oninput = ()=>{
+        const totalSec = (parseInt(hourInput.value)||0)*3600 + (parseInt(minInput.value)||0)*60 + (parseInt(secInput.value)||0);
+        const watchedSecVal = (parseInt(watchedHour.value)||0)*3600 + (parseInt(watchedMin.value)||0)*60 + (parseInt(watchedSec.value)||0);
+        if(totalSec>0){
+          let p = Math.round((watchedSecVal/totalSec)*10000)/100;
+          progressBar.style.width = Math.min(p,100)+"%";
+        }
+      }
+    });
+
     secDiv.appendChild(videoDiv);
 
     // 개념정리 섹터
@@ -136,62 +166,65 @@ function renderSections(){
     const conceptInput = document.createElement("input"); conceptInput.placeholder="개념 정리";
     const conceptCheck = document.createElement("input"); conceptCheck.type="checkbox"; conceptCheck.style.marginLeft="6px";
     conceptDiv.appendChild(conceptInput); conceptDiv.appendChild(conceptCheck);
-
     secDiv.appendChild(conceptDiv);
 
-    sectionsContainer.appendChild(secDiv);
+    // 문풀 섹터
+    const problemDiv = document.createElement("div"); problemDiv.className="problemTask";
+    const problemTitleInput = document.createElement("input"); problemTitleInput.placeholder="문제집 이름";
+    problemDiv.appendChild(problemTitleInput);
 
-    // 시간 입력 시 1시간 미만이면 시간칸 숨김
-    function updateTimeDisplay(){
-      const h = parseInt(hourInput.value)||0;
-      if(h===0) hourInput.style.display="none"; else hourInput.style.display="inline-block";
+    const typeSelect = document.createElement("select");
+    const optionPage = document.createElement("option"); optionPage.value="page"; optionPage.innerText="페이지 수";
+    const optionNum = document.createElement("option"); optionNum.value="num"; optionNum.innerText="문항 수";
+    typeSelect.appendChild(optionPage); typeSelect.appendChild(optionNum);
+    problemDiv.appendChild(typeSelect);
+
+    const startInput = document.createElement("input"); startInput.placeholder="시작 n1"; startInput.style.width="60px";
+    const endInput = document.createElement("input"); endInput.placeholder="끝 n2"; endInput.style.width="60px"; 
+    const currentInput = document.createElement("input"); currentInput.placeholder="진행 x"; currentInput.style.width="60px";
+    problemDiv.appendChild(startInput); problemDiv.appendChild(endInput); problemDiv.appendChild(currentInput);
+
+    const progressContainerP = document.createElement("div"); progressContainerP.className="progressContainer";
+    const progressBarP = document.createElement("div"); progressBarP.className="progressBar";
+    progressContainerP.appendChild(progressBarP); problemDiv.appendChild(progressContainerP);
+
+    const heartP = document.createElement("span"); heartP.className="heartBtn"; heartP.innerText="♡";
+    heartP.onclick=()=>{
+      progressBarP.style.width="100%"; heartP.innerText="♥";
     }
-    hourInput.oninput = updateTimeDisplay;
+    problemDiv.appendChild(heartP);
+
+    currentInput.oninput=()=>{
+      const x=parseFloat(currentInput.value)||0;
+      if(typeSelect.value==="page"){
+        const n1=parseFloat(startInput.value)||0;
+        const n2=parseFloat(endInput.value)||0;
+        if(n2>n1){ let p=Math.round(((x-n1+1)/(n2-n1+1))*10000)/100; progressBarP.style.width=p+"%"; }
+      } else {
+        const n=parseFloat(endInput.value)||0;
+        if(n>0){ let p=Math.round((x/n)*10000)/100; progressBarP.style.width=p+"%"; }
+      }
+    }
+
+    secDiv.appendChild(problemDiv);
+    sectionsContainer.appendChild(secDiv);
   });
 }
 
-// 채팅
-function timeAgo(ts){
-  let diff = Math.floor((Date.now()-ts)/60000);
-  if(diff<1) return "방금 전";
-  if(diff<60) return diff+"분 전";
-  let h=Math.floor(diff/60);
-  return h+"시간 전";
-}
-function load(){
-  let data = JSON.parse(localStorage.getItem("chat")||"[]");
-  chat.innerHTML="";
-  let lastMeIndex = [...data].map(m=>m.type).lastIndexOf("me");
+// DM 채팅
+function timeAgo(ts){ let diff = Math.floor((Date.now()-ts)/60000); if(diff<1) return "방금 전"; if(diff<60) return diff+"분 전"; let h=Math.floor(diff/60); return h+"시간 전"; }
+function load(){ let data=JSON.parse(localStorage.getItem("chat")||"[]"); chat.innerHTML=""; let lastMeIndex=[...data].map(m=>m.type).lastIndexOf("me"); data.forEach((m,i)=>{ let row=document.createElement("div"); row.className="row"; if(m.type==="ai"){ let img=document.createElement("img"); img.src="pfp.jpg"; img.className="pfp"; row.appendChild(img);} let msg=document.createElement("div"); msg.className="msg "+m.type; msg.innerText=m.text; row.appendChild(msg); chat.appendChild(row); if(i===lastMeIndex){ let r=document.createElement("div"); r.className="read"; r.innerText="읽음 · "+timeAgo(m.time); chat.appendChild(r);}}); chat.scrollTop=chat.scrollHeight; }
 
-  data.forEach((m,i)=>{
-    let row=document.createElement("div"); row.className="row";
-    if(m.type==="ai"){ let img=document.createElement("img"); img.src="pfp.jpg"; img.className="pfp"; row.appendChild(img);}
-    let msg=document.createElement("div"); msg.className="msg "+m.type; msg.innerText=m.text; row.appendChild(msg); chat.appendChild(row);
-    if(i === lastMeIndex){ let r=document.createElement("div"); r.className="read"; r.innerText="읽음 · "+timeAgo(m.time); chat.appendChild(r);}
-  });
-  chat.scrollTop=chat.scrollHeight;
-}
+function sendMsg(){ let input=document.getElementById("msgInput"); let text=input.value.trim(); if(!text) return; save(text,"me"); input.value=""; setTimeout(()=>{ if(document.getElementById("msgInput").value.trim()==="") aiReply(text); },1500);}
+function save(text,type){ let data=JSON.parse(localStorage.getItem("chat")||"[]"); data.push({text,type,time:Date.now()}); localStorage.setItem("chat",JSON.stringify(data)); load();}
 
-function sendMsg(){
-  let input = document.getElementById("msgInput"); let text = input.value.trim();
-  if(!text) return; save(text,"me"); input.value="";
-  setTimeout(()=>{
-    if(document.getElementById("msgInput").value.trim()==="") aiReply(text);
-  },1500);
-}
-function save(text,type){
-  let data = JSON.parse(localStorage.getItem("chat")||"[]");
-  data.push({text,type,time:Date.now()});
-  localStorage.setItem("chat",JSON.stringify(data)); load();
-}
-function aiReply(userMsg){ let base=["ㅅ","ㅎㅅ","왜ㅅ"]; let msg=base[Math.floor(Math.random()*base.length)]; save(msg,"ai"); }
-
+// 공부 압박 메시지
 setInterval(()=>{
-  const available = studyMsgs.filter(m=>!sentMsgs.has(m));
+  const available=studyMsgs.filter(m=>!sentMsgs.has(m));
   if(available.length===0) sentMsgs.clear();
-  const msg = available[Math.floor(Math.random()*available.length)];
+  const msg=available[Math.floor(Math.random()*available.length)];
   sentMsgs.add(msg); save(msg,"ai");
-}, 1000*60*5);
+},1000*60*5);
 
 document.addEventListener("DOMContentLoaded",()=>{ load(); });
 </script>
