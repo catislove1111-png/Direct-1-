@@ -3,20 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>♡</title>
+<title>♡ DM & 플래너</title>
 <style>
+/* 기본 스타일 */
 body { margin:0; font-family:-apple-system; background:#fff; }
 .header { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid #eee; background:#fff; }
 .header .name { font-weight:600; font-size:16px; color:#333; }
 .header .add-today { font-weight:700; font-size:22px; color:#FFCBD9; cursor:pointer; }
 
+/* 컨테이너 */
 #container { display:flex; flex-direction:column; height:calc(100vh - 52px); }
 .chat-planner { flex:1; overflow-y:auto; padding:10px; }
 
+/* 플래너 박스 */
 .daily-task-box { background:#fff; border:2px solid #FFCBD9; border-radius:16px; padding:12px; margin:10px 0; position:relative; }
 .daily-date { color:#FFCBD9; font-size:20px; font-weight:700; margin-bottom:8px; }
 .add-sector-btn { font-weight:700; font-size:18px; color:#FFCBD9; border:none; background:none; cursor:pointer; }
 
+/* 섹터 박스 */
 .sectors-container { margin-top:8px; display:flex; flex-direction:column; gap:8px; }
 .sector-box { border-radius:12px; border:1px solid #FFCBD9; padding:8px; background:#fff; position:relative; }
 .sector-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
@@ -26,10 +30,12 @@ body { margin:0; font-family:-apple-system; background:#fff; }
 .sector-content input[type="number"], .sector-content input[type="text"] { width:50px; padding:4px; margin-right:4px; border:1px solid #ccc; border-radius:4px; }
 .sector-divider { border:none; height:1px; background:#FFCBD9; margin-top:6px; }
 
+/* 진행바 */
 .progress-bar { width:100%; height:8px; border:1px solid #FFCBD9; border-radius:4px; background:#fff; margin-top:4px; position:relative; }
 .progress-fill { height:100%; background:#FFCBD9; border-radius:4px 0 0 4px; width:0%; }
 .heart-btn { cursor:pointer; font-size:18px; color:#FFCBD9; font-weight:700; margin-left:8px; }
 
+/* 버튼 메뉴 */
 .sector-select-menu { display:flex; gap:6px; margin-top:6px; }
 .sector-select-menu button { flex:1; border-radius:8px; border:1px solid #FFCBD9; background:#fff; color:#FFCBD9; font-weight:700; padding:6px; cursor:pointer; }
 
@@ -60,7 +66,7 @@ button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20p
 
   <div class="inputArea">
     <input id="msgInput" placeholder="메시지 보내기...">
-    <button class="sendBtn" onclick="sendMsg()">전송</button>
+    <button class="sendBtn">전송</button>
   </div>
 </div>
 
@@ -79,7 +85,10 @@ button.sendBtn { margin-left:6px; padding:0 12px; border:none; border-radius:20p
   </div>
 </div>
 
+</body>
+</html>
 <script>
+// DOM 요소 선택
 const dmScreen = document.getElementById('dmScreen');
 const plannerScreen = document.getElementById('plannerScreen');
 const addTodayBtn = document.getElementById('addTodayBtn');
@@ -88,61 +97,77 @@ const dDayDisplay = document.getElementById('dDayDisplay');
 const todayDate = document.getElementById('todayDate');
 const chatPlanner = document.getElementById('chatPlanner');
 const chatEl = document.getElementById('chat');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.querySelector('.sendBtn');
 
+// 오늘 날짜
 const today = new Date();
 const todayStr = today.toISOString().split('T')[0];
 
-let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
-let chatData = JSON.parse(localStorage.getItem('chat')||'[]');
+// 로컬 스토리지 초기화
+let tasksData = JSON.parse(localStorage.getItem('tasksData') || '{}');
+let chatData = JSON.parse(localStorage.getItem('chat') || '[]');
 
-function saveData(){ localStorage.setItem('tasksData', JSON.stringify(tasksData)); }
-function saveChat(){ localStorage.setItem('chat', JSON.stringify(chatData)); }
-function daysUntil(target){ return Math.ceil((target - new Date())/(1000*60*60*24)); }
+// 저장 함수
+function saveData() { localStorage.setItem('tasksData', JSON.stringify(tasksData)); }
+function saveChat() { localStorage.setItem('chat', JSON.stringify(chatData)); }
+function saveChatMsg(text, type) { chatData.push({text,type,time:Date.now()}); saveChat(); renderChat(); }
 
+// DM 렌더링
 function renderChat(){
-  chatEl.innerHTML='';
+  chatEl.innerHTML = '';
   let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
   chatData.forEach((m,i)=>{
-    let row=document.createElement('div'); row.className='row';
-    let msg=document.createElement('div'); msg.className='msg '+m.type; msg.innerText=m.text;
-    row.appendChild(msg); chatEl.appendChild(row);
+    let row = document.createElement('div');
+    row.className = 'row';
+    let msg = document.createElement('div');
+    msg.className = 'msg ' + m.type;
+    msg.innerText = m.text;
+    row.appendChild(msg);
+    chatEl.appendChild(row);
     if(i===lastMeIndex){
-      let r=document.createElement('div'); r.className='read'; r.innerText='읽음'; chatEl.appendChild(r);
+      let r = document.createElement('div');
+      r.className = 'read';
+      r.innerText = '읽음';
+      chatEl.appendChild(r);
     }
   });
-  chatEl.scrollTop=chatEl.scrollHeight;
+  chatEl.scrollTop = chatEl.scrollHeight;
 }
 
-function save(text,type){ chatData.push({text,type,time:Date.now()}); saveChat(); renderChat(); }
-
-function sendMsg(){
-  let input = document.getElementById("msgInput");
-  let text = input.value.trim();
+// DM 메시지 전송
+sendBtn.addEventListener('click', ()=>{
+  let text = msgInput.value.trim();
   if(!text) return;
-  save(text,"me");
-  input.value="";
-}
+  saveChatMsg(text,'me');
+  msgInput.value='';
+});
 
-addTodayBtn.addEventListener('click', () => {
+// DM → 플래너 전환
+addTodayBtn.addEventListener('click', ()=>{
   dmScreen.style.display = 'none';
   plannerScreen.style.display = 'block';
 
-  const target = new Date(2026,10,19);
+  // D-day 계산 (2026년 11월 19일)
+  const target = new Date(2026,10,19); // 0~11
   const diff = Math.ceil((target - new Date())/(1000*60*60*24));
   dDayDisplay.innerText = 'D-' + diff;
   todayDate.innerText = today.toLocaleDateString('ko-KR');
 
+  // 오늘 데이터 초기화
   if(!tasksData[todayStr]) tasksData[todayStr] = [];
   renderDailyTask();
 });
 
-backToDM.addEventListener('click', () => {
+// 플래너 → DM 전환
+backToDM.addEventListener('click', ()=>{
   plannerScreen.style.display = 'none';
   dmScreen.style.display = 'block';
 });
 
+// 오늘 할 일 렌더링 (기본 박스)
 function renderDailyTask(){
-  chatPlanner.innerHTML='';
+  chatPlanner.innerHTML = '';
   const box = document.createElement('div');
   box.className = 'daily-task-box';
   box.innerHTML = `<div class="daily-date">${today.toLocaleDateString('ko-KR')}</div>`;
@@ -152,173 +177,32 @@ function renderDailyTask(){
 // 초기 렌더
 renderChat();
 </script>
-// ========= 초기 세팅 =========
-const chatPlanner = document.getElementById('chatPlanner');
-const chatEl = document.getElementById('chat');
-const addTodayBtn = document.getElementById('addTodayBtn');
-const today = new Date();
-const todayStr = today.toISOString().split('T')[0];
-const DDAY = new Date('2026-11-19');
-
-let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
-let chatData = JSON.parse(localStorage.getItem('chat')||'[]');
-let typing = false;
-
-// ========= 헬퍼 =========
-function saveData(){ localStorage.setItem('tasksData', JSON.stringify(tasksData)); }
-function saveChat(){ localStorage.setItem('chat', JSON.stringify(chatData)); }
-function daysUntil(target){ return Math.ceil((target - new Date())/(1000*60*60*24)); }
-
-// ========= DM 렌더 =========
-function renderChat(){
-  chatEl.innerHTML='';
-  let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
-  chatData.forEach((m,i)=>{
-    let row=document.createElement('div'); row.className='row';
-    let msg=document.createElement('div'); msg.className='msg '+m.type; msg.innerText=m.text;
-    row.appendChild(msg); chatEl.appendChild(row);
-    if(i===lastMeIndex){
-      let r=document.createElement('div'); r.className='read'; r.innerText='읽음'; chatEl.appendChild(r);
-    }
-  });
-  chatEl.scrollTop=chatEl.scrollHeight;
-}
-
-// ========= DM 보내기 =========
-function sendMsg(){
-  let input = document.getElementById("msgInput");
-  let text = input.value.trim();
-  if(!text) return;
-
-  save(text,"me");
-  input.value = "";
-
-  updateReadStatus();  // 읽음 표시
-  replyWithDelay(text); // 랜덤 텀 답장
-}
-
-// ========= AI 답장 생성 =========
-function reply(userMsg){
-  let botMsg = generateReply(userMsg);
-  chatData.push({text:botMsg,type:'ai',time:Date.now()}); saveChat(); renderChat();
-}
-
-function generateReply(userMsg){
-  userMsg = userMsg.trim();
-  if(userMsg.includes('뭐해')||userMsg.includes('뭐 함')||userMsg.includes('머해')) return 'ㅇㅇ';
-  if(userMsg.includes('보고싶')||userMsg.includes('싶')) return ['왜','갑자기 왜','뭐임'][Math.floor(Math.random()*3)];
-  if(userMsg.length>15||userMsg.includes('오늘')||userMsg.includes('썰')||userMsg.includes('웃')) return ['ㅋㅋ 재밋네 더 해봐','오','ㅋㅋ'][Math.floor(Math.random()*3)];
-  if(userMsg.length<3) return ['ㄴㅇㅁ','니애미야','느그 ㅋㅋ'][Math.floor(Math.random()*3)];
-  return ['ㅇㅇ','ㄴ','왜','ㅋㅋ'][Math.floor(Math.random()*4)];
-}
- function replyWithDelay(userMsg){
-    const minMs = 60*1000;       // 최소 1분
-    const maxMs = 2*60*60*1000;  // 최대 2시간
-    const delay = Math.random()*(maxMs - minMs) + minMs;
-
-    setTimeout(()=> {
-      const botMsg = generateReply(userMsg);
-      save(botMsg, "ai");
-      updateReadStatus();
-    }, delay);
-  }
-
-// ========= 공부 독촉 AI =========
-  document.addEventListener("DOMContentLoaded", () => {
-  load();          // 기존 채팅/플래너 초기화
-  studyReminder(); // 독촉 시작
-});
-function studyReminder(){
-  const todayTasks = tasksData[todayStr] || [];
-  const total = todayTasks.length;
-  const completed = todayTasks.filter(t => t.completed).length;
-
-  if(total === 0) return; // 오늘 할 일 없으면 종료
-  if(completed >= Math.ceil(total/2)) return; // 반 이상 완료하면 종료
-
-  // 반 이상 완료 안 되면 랜덤 독촉 메시지
-  const msgs = ['공부좀햇냐','오늘 얼마나함','너 공부안하면 연락안함','ㅗ','연락 ㄴ','나랑 결혼한다매 그럼 공부 잘해야지','너 고3아니냐 어케 나보다 공부를 덜함','니 지방대갈거냐','수의대간다매 공부를 왤케안해','니 공부 안하면 정떨임','할거 다 할때까지 연락 ㄴ'];
-  const msg = msgs[Math.floor(Math.random()*msgs.length)];
-  save(msg, 'ai');
-  updateReadStatus();
-
-  // 다음 독촉 랜덤 시간: 1시간17분 ~ 3시간 (ms)
-  const minMs = 77*60*1000;  // 1시간 17분
-  const maxMs = 3*60*60*1000; // 3시간
-  const delay = Math.random()*(maxMs - minMs) + minMs;
-
-  setTimeout(studyReminder, delay);
-}
-
-// ========= 플래너 렌더 =========
-function renderDailyTask(){
-  chatPlanner.innerHTML='';
-  if(!tasksData[todayStr]){
-    addTodayBtn.disabled=false;
-  } else {
-    addTodayBtn.disabled=true;
-    const box = createDailyTaskBox(todayStr);
-    chatPlanner.appendChild(box);
-  }
-}
-
-addTodayBtn.addEventListener('click', ()=>{
-  tasksData[todayStr]=[]; saveData(); renderDailyTask();
-});
-
-/// 섹터 선택 메뉴 (클릭으로 선택)
-  const sectorMenu = document.createElement('div');
-  sectorMenu.className = 'sector-select-menu';
-  const types = ['영상 시청', '개념 정리', '문풀'];
-  types.forEach(t=>{
-    const btn = document.createElement('button');
-    btn.innerText = t;
-    btn.addEventListener('click', ()=>{
-      const type = t==='영상 시청' ? 'video' : t==='개념 정리' ? 'concept' : 'problem';
-      const secBox = createSectorBox(type, {});
-      sectorsContainer.appendChild(secBox);
-      if(!tasksData[date]) tasksData[date] = [];
-      tasksData[date].push({type, data:{}});
-      saveData();
-      sectorMenu.remove();
-    });
-    sectorMenu.appendChild(btn);
-  });
-
-  addSectorBtn.addEventListener('click', ()=>{
-    if(!box.querySelector('.sector-select-menu')) box.appendChild(sectorMenu);
-  });
-
-  return box;
-}
-
+<script>
+// 섹터 박스 생성
 function createSectorBox(type, data){
   const box = document.createElement('div');
   box.className = 'sector-box';
 
+  // 헤더
   const header = document.createElement('div');
   header.className = 'sector-header';
-
   const title = document.createElement('div');
   title.className = 'sector-title';
-  title.innerText = type==='video' ? '영상 시청' : type==='concept' ? '개념 정리' : '문풀';
-
+  title.innerText = type==='video'?'영상 시청':type==='concept'?'개념 정리':'문풀';
   const removeBtn = document.createElement('button');
-  removeBtn.className = 'remove-sector';
-  removeBtn.innerText = 'x';
-  removeBtn.addEventListener('click', ()=>{
-    box.remove();
-  });
-
+  removeBtn.className='remove-sector';
+  removeBtn.innerText='x';
+  removeBtn.addEventListener('click',()=>box.remove());
   header.appendChild(title);
   header.appendChild(removeBtn);
   box.appendChild(header);
 
+  // 내용
   const content = document.createElement('div');
-  content.className = 'sector-content';
+  content.className='sector-content';
 
   if(type==='video'){
-    content.innerHTML = `
+    content.innerHTML=`
       <label>총 영상 길이:</label>
       <input type="number" min="0" placeholder="시간">시간
       <input type="number" min="0" placeholder="분">분
@@ -334,21 +218,21 @@ function createSectorBox(type, data){
     const heart = content.querySelector('.heart-btn');
     const progress = content.querySelector('.progress-fill');
     heart.addEventListener('click', ()=>{
-      progress.style.width = '100%';
-      heart.innerText = '♥';
+      progress.style.width='100%';
+      heart.innerText='♥';
     });
   }
 
   if(type==='concept'){
-    content.innerHTML = `
+    content.innerHTML=`
       <label>완료 체크</label>
       <input type="checkbox">
       <hr class="sector-divider">
     `;
   }
 
-    if(type==='problem'){
-    content.innerHTML = `
+  if(type==='problem'){
+    content.innerHTML=`
       <label>문제집 이름:</label>
       <input type="text" placeholder="책 이름">
       <br>
@@ -360,26 +244,132 @@ function createSectorBox(type, data){
     const heart = content.querySelector('.heart-btn');
     const progress = content.querySelector('.progress-fill');
     heart.addEventListener('click', ()=>{
-      progress.style.width = '100%';
-      heart.innerText = '♥';
+      progress.style.width='100%';
+      heart.innerText='♥';
     });
   }
 
   box.appendChild(content);
   const hr = document.createElement('hr');
-  hr.className = 'sector-divider';
+  hr.className='sector-divider';
   box.appendChild(hr);
 
   return box;
 }
 
-addTodayBtn.addEventListener('click', ()=>{
-  tasksData[todayStr] = [];
-  saveData();
-  renderDailyTask();
-});
+// 오늘 할 일 박스 생성 및 섹터 선택
+function renderDailyTask(){
+  chatPlanner.innerHTML='';
+  const box = document.createElement('div');
+  box.className='daily-task-box';
+  box.innerHTML=`<div class="daily-date">${today.toLocaleDateString('ko-KR')}</div>`;
+  const addSectorBtn = document.createElement('button');
+  addSectorBtn.className='add-sector-btn';
+  addSectorBtn.innerText='+ 섹터 추가';
+  box.appendChild(addSectorBtn);
+  const sectorsContainer = document.createElement('div');
+  sectorsContainer.className='sectors-container';
+  box.appendChild(sectorsContainer);
 
+  // 섹터 선택 메뉴
+  const sectorMenu = document.createElement('div');
+  sectorMenu.className='sector-select-menu';
+  const types = ['영상 시청','개념 정리','문풀'];
+  types.forEach(t=>{
+    const btn = document.createElement('button');
+    btn.innerText = t;
+    btn.addEventListener('click',()=>{
+      const type = t==='영상 시청'?'video':t==='개념 정리'?'concept':'problem';
+      const secBox = createSectorBox(type,{});
+      sectorsContainer.appendChild(secBox);
+      sectorMenu.remove();
+    });
+    sectorMenu.appendChild(btn);
+  });
+
+  addSectorBtn.addEventListener('click',()=>{
+    if(!box.querySelector('.sector-select-menu')) box.appendChild(sectorMenu);
+  });
+
+  chatPlanner.appendChild(box);
+}
+
+// 초기 렌더
 renderDailyTask();
 </script>
-</body>
-</html>
+<script>
+// 읽음 표시
+function updateReadStatus(){
+  const rows = chatEl.querySelectorAll('.row');
+  if(rows.length===0) return;
+  const lastMe = Array.from(rows).reverse().find(r=>r.querySelector('.me'));
+  if(lastMe){
+    let read = document.createElement('div');
+    read.className='read';
+    read.innerText='읽음';
+    lastMe.after(read);
+  }
+}
+
+// AI 답장 생성
+function generateReply(userMsg){
+  userMsg = userMsg.trim();
+  if(userMsg.includes('뭐해')||userMsg.includes('뭐 함')||userMsg.includes('머해')) return 'ㅇㅇ';
+  if(userMsg.includes('보고싶')||userMsg.includes('싶')) return ['왜','갑자기 왜','뭐임'][Math.floor(Math.random()*3)];
+  if(userMsg.length>15||userMsg.includes('오늘')||userMsg.includes('썰')||userMsg.includes('웃')) return ['ㅋㅋ 재밋네 더 해봐','오','ㅋㅋ'][Math.floor(Math.random()*3)];
+  if(userMsg.length<3) return ['ㄴㅇㅁ','니애미야','느그 ㅋㅋ'][Math.floor(Math.random()*3)];
+  return ['ㅇㅇ','ㄴ','왜','ㅋㅋ'][Math.floor(Math.random()*4)];
+}
+
+// DM 답장 지연
+function replyWithDelay(userMsg){
+  const minMs = 60*1000;       // 최소 1분
+  const maxMs = 2*60*60*1000;  // 최대 2시간
+  const delay = Math.random()*(maxMs - minMs) + minMs;
+
+  setTimeout(()=>{
+    const botMsg = generateReply(userMsg);
+    saveChatMsg(botMsg,'ai');
+    updateReadStatus();
+  }, delay);
+}
+
+// DM 전송 버튼에 AI 답장 연결
+sendBtn.addEventListener('click', ()=>{
+  let text = msgInput.value.trim();
+  if(!text) return;
+  saveChatMsg(text,'me');
+  msgInput.value='';
+  updateReadStatus();
+  replyWithDelay(text);
+});
+
+// 공부 독촉 AI
+function studyReminder(){
+  const todayTasks = tasksData[todayStr] || [];
+  const total = todayTasks.length;
+  const completed = todayTasks.filter(t => t.completed).length;
+
+  if(total===0) return;
+  if(completed>=Math.ceil(total/2)) return;
+
+  const msgs = ['공부좀햇냐','오늘 얼마나함','너 공부안하면 연락안함','ㅗ','연락 ㄴ',
+                '나랑 결혼한다매 그럼 공부 잘해야지','너 고3아니냐 어케 나보다 공부를 덜함',
+                '니 지방대갈거냐','수의대간다매 공부를 왤케안해','니 공부 안하면 정떨림','할거 다 할때까지 연락 ㄴ'];
+  const msg = msgs[Math.floor(Math.random()*msgs.length)];
+  saveChatMsg(msg,'ai');
+  updateReadStatus();
+
+  const minMs = 77*60*1000;  // 1시간 17분
+  const maxMs = 3*60*60*1000; // 3시간
+  const delay = Math.random()*(maxMs - minMs) + minMs;
+
+  setTimeout(studyReminder, delay);
+}
+
+// 페이지 로드 시 실행
+document.addEventListener('DOMContentLoaded',()=>{
+  renderChat();
+  studyReminder();
+});
+</script>
