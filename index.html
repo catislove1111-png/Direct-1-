@@ -4,490 +4,203 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>♡</title>
+
 <style>
-body { margin:0; font-family:-apple-system; background:#fff; color:#333; }
+body { margin:0; font-family:-apple-system; background:#fff; }
 
 .header {
   display:flex; justify-content:space-between; align-items:center;
-  padding:10px 16px; border-bottom:1px solid #FFCBD9; background:#fff;
+  padding:10px 16px; border-bottom:1px solid #FFCBD9;
 }
-.header .name { font-weight:600; font-size:16px; }
-.header .add-today { font-weight:700; font-size:22px; color:#FFCBD9; cursor:pointer; }
+.name { font-weight:600; }
+.add-btn { font-size:22px; color:#FFCBD9; cursor:pointer; }
 
 #container { display:flex; flex-direction:column; height:calc(100vh - 52px); }
-.chat-planner { flex:1; overflow-y:auto; padding:10px; }
 
-#chat {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  overflow-y:auto;
-  margin-top:10px;
-  padding:0 10px; /* ← 여기 정상 복구 */
-}
-
-/* 채팅 */
-.row {
-  display:flex;
-  margin:6px 0;
-}
+#chat { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; }
+.row { display:flex; margin:6px 0; }
 
 .msg {
   max-width:65%;
   padding:10px 14px;
   border-radius:18px;
   font-size:14px;
-  word-break:break-word;
 }
 
-.me {
-  margin-left:auto;
-  background:linear-gradient(135deg,#FFCBD9,#FF97B3);
-  color:white;
-}
+.me { margin-left:auto; background:linear-gradient(135deg,#FFCBD9,#FF97B3); color:white; }
+.ai { margin-right:auto; background:#f1f1f1; }
 
-.ai {
-  margin-right:auto;
-  background:#f1f1f1;
-}
+.read { font-size:11px; color:#999; margin-top:2px; }
 
-/* 입력창 */
-.inputArea {
-  display:flex;
-  align-items:center;
-  padding:8px;
-  border-top:1px solid #eee;
-  background:white;
-  gap:6px;
-}
+.inputArea { display:flex; padding:8px; border-top:1px solid #eee; }
+.inputArea input { flex:1; padding:10px; border-radius:20px; border:1px solid #ddd; }
+.sendBtn { margin-left:6px; border:none; border-radius:20px; background:#FFCBD9; color:white; padding:0 12px; }
 
-.inputArea input {
-  flex:1;
-  height:36px;
-  padding:0 12px;
-  border-radius:18px;
-  border:1px solid #ddd;
-}
+#plannerScreen { display:none; padding:20px; }
+.taskBox { border:2px solid #FFCBD9; border-radius:14px; padding:12px; margin-top:12px; }
 
-.sendBtn {
-  height:36px;
-  padding:0 14px;
-  border:none;
-  border-radius:18px;
-  background:#FFCBD9;
-  color:white;
-  cursor:pointer;
-  flex-shrink:0;
-}
-
-/* 플래너 화면 기본 숨김 */
-#plannerScreen { display:none; }
-
+.sector { border:1px solid #FFCBD9; border-radius:10px; padding:8px; margin-top:8px; }
+.progress { height:6px; border:1px solid #FFCBD9; border-radius:4px; margin-top:4px; }
+.fill { height:100%; background:#FFCBD9; width:0%; }
 </style>
 </head>
+
 <body>
 
-<!-- DM 화면 -->
 <div id="dmScreen">
   <div class="header">
     <div class="name">김현준</div>
-    <div class="add-today" id="addTodayBtn">＋</div>
+    <div class="add-btn" id="goPlanner">＋</div>
   </div>
 
   <div id="container">
-    <div class="chat-planner" id="chatPlanner"></div>
     <div id="chat"></div>
   </div>
 
   <div class="inputArea">
-    <input id="msgInput" placeholder="메시지 보내기...">
-    <button class="sendBtn">전송</button>
+    <input id="msgInput">
+    <button class="sendBtn" id="sendBtn">전송</button>
   </div>
 </div>
 
-<!-- 플래너 화면 -->
 <div id="plannerScreen">
-  <div class="header">
-    <div id="backToDM" style="font-size:20px; font-weight:700; cursor:pointer;">&lt;</div>
-    <div style="font-weight:700;">플래너</div>
-    <div></div>
-  </div>
-
-  <div id="plannerContent" style="padding:20px;">
-    <div id="dDayDisplay" style="font-size:28px; font-weight:700; margin-bottom:20px;"></div>
-    <div id="todayDate" style="font-size:20px; color:#FFCBD9; font-weight:700; margin-bottom:10px;"></div>
-    <button id="addTaskBtn" style="border:2px solid #FFCBD9; background:#fff; color:#FFCBD9; padding:10px; border-radius:12px;">할 일 추가</button>
-    <div id="taskContainer" style="margin-top:20px;"></div>
-  </div>
+  <div id="backBtn">←</div>
+  <h1 id="dDay"></h1>
+  <div id="today"></div>
+  <button id="addTaskBtn">할 일 추가</button>
+  <div id="taskContainer"></div>
 </div>
 
 <script>
-// 화면 전환
-const dmScreen = document.getElementById('dmScreen');
-const plannerScreen = document.getElementById('plannerScreen');
-const addTodayBtn = document.getElementById('addTodayBtn');
-const backToDM = document.getElementById('backToDM');
-const dDayDisplay = document.getElementById('dDayDisplay');
-const todayDate = document.getElementById('todayDate');
-const taskContainer = document.getElementById('taskContainer');
-
-
-  dmScreen.style.display='none';
-  plannerScreen.style.display='block';
-
-  const target = new Date(2026,10,19);
-  const now = new Date();
-  const diff = Math.ceil((target - now)/(1000*60*60*24));
-  dDayDisplay.innerText='D-'+diff;
-  todayDate.innerText=now.toLocaleDateString('ko-KR');
-});
-
-backToDM.addEventListener('click', ()=>{
-  plannerScreen.style.display='none';
-  dmScreen.style.display='block';
-});
-
-// DM 채팅 기본
-const chatEl = document.getElementById('chat');
-let chatData = JSON.parse(localStorage.getItem('chat')||'[]');
-let isTyping = false;
-function renderChat(){
-  chatEl.innerHTML='';
-
-  let lastMeIndex = chatData.map(m=>m.type).lastIndexOf('me');
-
-  chatData.forEach((m,i)=>{
-    let row = document.createElement('div');
-    row.className='row'; // flex는 CSS에서 처리
-
-    let msg = document.createElement('div');
-    msg.className='msg ' + m.type;
-    msg.innerText = m.text;
-
-    // 핵심: 말풍선 + 읽음 묶는 박스
-    let bubbleWrap = document.createElement('div');
-    bubbleWrap.style.display='flex';
-    bubbleWrap.style.flexDirection='column';
-    bubbleWrap.style.alignItems = (m.type === 'me') ? 'flex-end' : 'flex-start';
-
-    bubbleWrap.appendChild(msg);
-
-    // 읽음 표시
-    if(m.type==='me' && i===lastMeIndex){
-      let nextAI = chatData.slice(i+1).find(x=>x.type==='ai');
-
-      if(nextAI && !isTyping){
-        const diff = nextAI.time - m.time;
-        const readText = getReadText(diff);
-
-        let read = document.createElement('div');
-        read.innerText = readText;
-        read.style.fontSize='11px';
-        read.style.color='#999';
-        read.style.marginTop='2px';
-
-        bubbleWrap.appendChild(read);
-      }
-    }
-
-    row.appendChild(bubbleWrap);
-    chatEl.appendChild(row);
-  });
-
-  // 타이핑 표시
-  if(isTyping){
-    let row = document.createElement('div');
-    row.className='row';
-
-    let bubbleWrap = document.createElement('div');
-    bubbleWrap.style.display='flex';
-    bubbleWrap.style.flexDirection='column';
-    bubbleWrap.style.alignItems='flex-start';
-
-    let typingMsg = document.createElement('div');
-    typingMsg.className='msg ai';
-    typingMsg.innerText='...';
-
-    bubbleWrap.appendChild(typingMsg);
-    row.appendChild(bubbleWrap);
-    chatEl.appendChild(row);
-  chatEl.scrollTop = chatEl.scrollHeight;
-}
-  
-function save(msg,type){
-  chatData.push({
-    text:msg,
-    type:type,
-    time:Date.now()
-  });
-  localStorage.setItem('chat',JSON.stringify(chatData));
-  renderChat();
-}
-
-function getReadText(diffMs){
-  if(diffMs <= 10000) return '방금 전 읽음';
-
-  const minutes = Math.floor(diffMs / (1000*60));
-  const hours = Math.floor(diffMs / (1000*60*60));
-
-  if(diffMs < 60*60*1000){
-    return minutes + '분 전 읽음';
-  } else {
-    return hours + '시간 전 읽음';
-  }
-}
-renderChat();
-  // ========= AI 답장 & 공부 독촉 =========
-
-
-// DM 답장 생성
-function generateReply(userMsg){
-    userMsg = userMsg.trim();
-    if(userMsg.includes('뭐해')||userMsg.includes('뭐 함')||userMsg.includes('머해')) return 'ㅇㅇ';
-    if(userMsg.includes('보고싶')||userMsg.includes('싶')) return ['왜','갑자기 왜','뭐임'][Math.floor(Math.random()*3)];
-    if(userMsg.length>15||userMsg.includes('오늘')||userMsg.includes('썰')||userMsg.includes('웃')) return ['ㅋㅋ 재밋네 더 해봐','오','ㅋㅋ'][Math.floor(Math.random()*3)];
-    if(userMsg.length<3) return ['ㄴㅇㅁ','니애미야','느그 ㅋㅋ'][Math.floor(Math.random()*3)];
-    return ['ㅇㅇ','ㄴ','왜','ㅋㅋ'][Math.floor(Math.random()*4)];
-}
-
-// DM에 답장 추가
-function reply(userMsg){
-    const botMsg = generateReply(userMsg);
-    save(botMsg,'ai');
-}
-
-// 랜덤 텀으로 답장
-function replyWithDelay(userMsg){
-    const minMs = 60*1000;       // 최소 1분
-    const maxMs = 2*60*60*1000;  // 최대 2시간
-    const delay = Math.random()*(maxMs - minMs) + minMs;
-    setTimeout(()=>reply(userMsg), delay);
-}
-
-// DM 메시지 보내기와 자동 답장
-function sendMsg(){
-    const input = document.getElementById('msgInput');
-    const text = input.value.trim();
-    if(!text) return;
-    save(text,'me');
-    input.value='';
-    replyWithDelay(text); // 랜덤 텀 답장
-}
-
-// ========= 공부 독촉 AI =========
-function studyReminder(){
-    // 오늘 플래너 tasks 불러오기
-    const todayStr = new Date().toISOString().split('T')[0];
-    let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
-    const todayTasks = tasksData[todayStr] || [];
-    const total = todayTasks.length;
-    const completed = todayTasks.filter(t => t.completed).length;
-
-    if(total===0 || completed>=Math.ceil(total/2)) return; // 할 일 없거나 반 이상 완료시 종료
-
-    const msgs = [
-        '공부좀햇냐','오늘 얼마나함','너 공부안하면 연락안함','ㅗ','연락 ㄴ',
-        '나랑 결혼한다매 그럼 공부 잘해야지','너 고3아니냐 어케 나보다 공부를 덜함',
-        '니 지방대갈거냐','수의대간다매 공부를 왤케안해','니 공부 안하면 정떨임','할거 다 할때까지 연락 ㄴ'
-    ];
-    const msg = msgs[Math.floor(Math.random()*msgs.length)];
-    save(msg,'ai');
-
-    // 다음 독촉 랜덤 시간: 1시간17분 ~ 3시간
-    const minMs = 77*60*1000;
-    const maxMs = 3*60*60*1000;
-    const delay = Math.random()*(maxMs - minMs) + minMs;
-
-    setTimeout(studyReminder, delay);
-}
-
-// ========= 초기 로드 =========
 document.addEventListener("DOMContentLoaded", ()=>{
-    renderChat(); // 기존 채팅 렌더
-    studyReminder(); // 공부 독촉 시작
-});
 
-// ========= 플래너 섹션 데이터 =========
-let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
-const todayStr = new Date().toISOString().split('T')[0];
+const dm = document.getElementById('dmScreen');
+const planner = document.getElementById('plannerScreen');
+const chatEl = document.getElementById('chat');
+const input = document.getElementById('msgInput');
 
-const addTaskBtn = document.getElementById('addTaskBtn');
+let chat = JSON.parse(localStorage.getItem('chat')||'[]');
+let isTyping=false;
 
-// 할 일 섹션 생성
-function createDailyTaskSection(date){
-    const box = document.createElement('div');
-    box.className = 'daily-task-box';
-    box.style.border = '2px solid #FFCBD9';
-    box.style.borderRadius = '16px';
-    box.style.padding = '12px';
-    box.style.marginBottom = '12px';
+// 화면 전환
+goPlanner.onclick=()=>{
+ dm.style.display='none';
+ planner.style.display='block';
+ const t=new Date(2026,10,19);
+ const n=new Date();
+ dDay.innerText='D-'+Math.ceil((t-n)/(86400000));
+ today.innerText=n.toLocaleDateString('ko-KR');
+};
+backBtn.onclick=()=>{planner.style.display='none';dm.style.display='block';};
 
-    // 날짜 표시
-    const dateEl = document.createElement('div');
-    dateEl.className = 'daily-date';
-    dateEl.innerText = date;
-    box.appendChild(dateEl);
+// 채팅 렌더
+function render(){
+ chatEl.innerHTML='';
+ let lastMe=chat.map(m=>m.type).lastIndexOf('me');
 
-    // 섹터 컨테이너
-    const sectorsContainer = document.createElement('div');
-    sectorsContainer.className = 'sectors-container';
-    box.appendChild(sectorsContainer);
+ chat.forEach((m,i)=>{
+  let row=document.createElement('div'); row.className='row';
+  let wrap=document.createElement('div');
+  wrap.style.display='flex'; wrap.style.flexDirection='column';
+  wrap.style.alignItems=m.type==='me'?'flex-end':'flex-start';
 
-    // 섹터 추가 버튼
-    const addSectorBtn = document.createElement('button');
-    addSectorBtn.className = 'add-sector-btn';
-    addSectorBtn.innerText = '+ 섹터 추가';
-    box.appendChild(addSectorBtn);
+  let msg=document.createElement('div');
+  msg.className='msg '+m.type;
+  msg.innerText=m.text;
+  wrap.appendChild(msg);
 
-    addSectorBtn.addEventListener('click', ()=>{
-        showSectorMenu(sectorsContainer,date);
-    });
-
-    return box;
-}
-
-// 섹터 선택 메뉴
-function showSectorMenu(container,date){
-    const menu = document.createElement('div');
-    menu.className = 'sector-select-menu';
-    const types = ['영상 시청','개념 정리','문풀'];
-    types.forEach(t=>{
-        const btn = document.createElement('button');
-        btn.innerText = t;
-        btn.style.border='1px solid #FFCBD9';
-        btn.style.borderRadius='8px';
-        btn.style.background='#fff';
-        btn.style.color='#FFCBD9';
-        btn.style.fontWeight='700';
-        btn.style.padding='6px';
-        btn.addEventListener('click', ()=>{
-            const type = t==='영상 시청'?'video':t==='개념 정리'?'concept':'problem';
-            const secBox = createSectorBox(type);
-            container.appendChild(secBox);
-            // tasksData 저장
-            if(!tasksData[date]) tasksData[date]=[];
-            tasksData[date].push({type,data:{}});
-            localStorage.setItem('tasksData',JSON.stringify(tasksData));
-            menu.remove();
-        });
-        menu.appendChild(btn);
-    });
-    container.appendChild(menu);
-}
-// 문풀 섹터 생성 업데이트
-function createSectorBox(type){
-    const box = document.createElement('div');
-    box.className='sector-box';
-    box.style.border='1px solid #FFCBD9';
-    box.style.borderRadius='12px';
-    box.style.padding='8px';
-    box.style.marginBottom='8px';
-
-    // 헤더
-    const header = document.createElement('div');
-    header.className='sector-header';
-    header.style.display='flex';
-    header.style.justifyContent='space-between';
-    header.style.alignItems='center';
-
-    const title = document.createElement('div');
-    title.className='sector-title';
-    title.innerText = type==='video'?'영상 시청':type==='concept'?'개념 정리':'문풀';
-    title.style.fontWeight='700';
-    header.appendChild(title);
-
-    const removeBtn = document.createElement('button');
-    removeBtn.innerText='x';
-    removeBtn.style.border='none';
-    removeBtn.style.background='none';
-    removeBtn.style.color='#FFCBD9';
-    removeBtn.style.fontWeight='700';
-    removeBtn.style.cursor='pointer';
-    removeBtn.addEventListener('click',()=>box.remove());
-    header.appendChild(removeBtn);
-
-    box.appendChild(header);
-
-    // 내용
-    const content = document.createElement('div');
-    content.className='sector-content';
-    content.style.marginTop='6px';
-
-    if(type==='video'){
-        content.innerHTML=`
-            <div style="font-weight:700;">영상 제목</div>
-            <div style="font-size:12px; color:#FFCBD9;">총 길이</div>
-            <input type="number" min="0" placeholder="시간" style="width:40px">시간
-            <input type="number" min="0" placeholder="분" style="width:40px">분
-            <input type="number" min="0" placeholder="초" style="width:40px">초
-            <br>
-            <div style="font-size:12px; color:#FFCBD9;">현재 시청</div>
-            <input type="number" min="0" placeholder="시간" style="width:40px">시간
-            <input type="number" min="0" placeholder="분" style="width:40px">분
-            <input type="number" min="0" placeholder="초" style="width:40px">초
-            <div class="progress-bar" style="width:100%;height:8px;border:1px solid #FFCBD9;border-radius:4px;margin-top:4px;position:relative;">
-                <div class="progress-fill" style="height:100%;background:#FFCBD9;border-radius:4px 0 0 4px;width:0%;"></div>
-            </div>
-            <span class="heart-btn" style="cursor:pointer;font-size:18px;color:#FFCBD9;font-weight:700;margin-left:8px;">♡</span>
-        `;
-        const heart = content.querySelector('.heart-btn');
-        const progress = content.querySelector('.progress-fill');
-        heart.addEventListener('click',()=>{
-            progress.style.width='100%';
-            heart.innerText='♥';
-        });
-    }
-
-    if(type==='concept'){
-        content.innerHTML=`
-            <label>완료 체크</label>
-            <input type="checkbox">
-        `;
-    }
-
-    if(type==='problem'){ // 문풀 섹터
-        content.innerHTML=`
-            <label>문제집 이름:</label>
-            <input type="text" placeholder="책 이름">
-            <br>
-            <label>페이지(n1~n2) 또는 문제(n):</label>
-            <input type="text" placeholder="예: 1~20p 또는 30문항">
-            <div class="progress-bar" style="width:100%;height:8px;border:1px solid #FFCBD9;border-radius:4px;margin-top:4px;position:relative;">
-                <div class="progress-fill" style="height:100%;background:#FFCBD9;border-radius:4px 0 0 4px;width:0%;"></div>
-            </div>
-            <span class="heart-btn" style="cursor:pointer;font-size:18px;color:#FFCBD9;font-weight:700;margin-left:8px;">♡</span>
-        `;
-        const heart = content.querySelector('.heart-btn');
-        const progress = content.querySelector('.progress-fill');
-        heart.addEventListener('click',()=>{
-            progress.style.width='100%';
-            heart.innerText='♥';
-        });
-    }
-
-    box.appendChild(content);
-    return box;
-}
-  document.addEventListener("DOMContentLoaded", ()=>{
-  // 전송 버튼
-  const sendBtn = document.querySelector('.sendBtn');
-  if(sendBtn){
-    sendBtn.addEventListener('click', sendMsg);
+  if(m.type==='me' && i===lastMe && !isTyping){
+   let next=chat.slice(i+1).find(x=>x.type==='ai');
+   if(next){
+    let r=document.createElement('div');
+    let d=next.time-m.time;
+    if(d<10000) r.innerText='방금 전 읽음';
+    else if(d<3600000) r.innerText=Math.floor(d/60000)+'분 전 읽음';
+    else r.innerText=Math.floor(d/3600000)+'시간 전 읽음';
+    r.className='read';
+    wrap.appendChild(r);
+   }
   }
 
-  // + 버튼
-  const addBtn = document.getElementById('addTodayBtn');
-  if(addBtn){
-    addBtn.addEventListener('click', ()=>{
-      dmScreen.style.display='none';
-      plannerScreen.style.display='block';
+  row.appendChild(wrap);
+  chatEl.appendChild(row);
+ });
 
-      const target = new Date(2026,10,19);
-      const now = new Date();
-      const diff = Math.ceil((target - now)/(1000*60*60*24));
-      dDayDisplay.innerText='D-'+diff;
-      todayDate.innerText=now.toLocaleDateString('ko-KR');
-    });
-  }
+ if(isTyping){
+  let r=document.createElement('div'); r.className='row';
+  let m=document.createElement('div'); m.className='msg ai'; m.innerText='...';
+  r.appendChild(m); chatEl.appendChild(r);
+ }
+
+ chatEl.scrollTop=chatEl.scrollHeight;
+}
+
+function save(t,type){
+ chat.push({text:t,type,time:Date.now()});
+ localStorage.setItem('chat',JSON.stringify(chat));
+ render();
+}
+
+// 답장
+function reply(msg){
+ const arr=['ㅇㅇ','왜','ㅋㅋ','ㄴ'];
+ save(arr[Math.floor(Math.random()*arr.length)],'ai');
+}
+
+function replyDelay(msg){
+ let d=Math.random()*5000+1000;
+ isTyping=true; render();
+ setTimeout(()=>{isTyping=false; save(reply(msg),'ai');},d);
+}
+
+// 전송
+sendBtn.onclick=()=>{
+ let t=input.value.trim();
+ if(!t) return;
+ save(t,'me'); input.value='';
+ replyDelay(t);
+};
+
+// 독촉
+function nag(){
+ const m=['공부좀','연락 ㄴ','뭐함','공부해'];
+ save(m[Math.floor(Math.random()*m.length)],'ai');
+ setTimeout(nag,3600000+Math.random()*3600000);
+}
+nag();
+
+// 플래너
+addTaskBtn.onclick=()=>{
+ let box=document.createElement('div'); box.className='taskBox';
+ box.innerText=new Date().toLocaleDateString('ko-KR');
+
+ let btns=['영상 시청','개념 정리','문풀'];
+ btns.forEach(t=>{
+  let b=document.createElement('button');
+  b.innerText=t;
+  b.onclick=()=>{
+   let sec=document.createElement('div'); sec.className='sector';
+   sec.innerText=t;
+
+   if(t==='영상 시청'||t==='문풀'){
+    let bar=document.createElement('div'); bar.className='progress';
+    let fill=document.createElement('div'); fill.className='fill';
+    bar.appendChild(fill);
+    sec.appendChild(bar);
+   }
+
+   box.appendChild(sec);
+  };
+  box.appendChild(b);
+ });
+
+ taskContainer.appendChild(box);
+};
+
+render();
+
 });
 </script>
+
+</body>
+</html>
