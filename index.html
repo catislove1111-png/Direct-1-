@@ -181,7 +181,6 @@ function getReadText(diffMs){
 }
 renderChat();
   // ========= AI 답장 & 공부 독촉 =========
-<script>
 let typing = false;
 
 // DM 답장 생성
@@ -250,9 +249,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     renderChat(); // 기존 채팅 렌더
     studyReminder(); // 공부 독촉 시작
 });
-</script>
-</script>
-  <script>
+
 // ========= 플래너 섹션 데이터 =========
 let tasksData = JSON.parse(localStorage.getItem('tasksData')||'{}');
 const todayStr = new Date().toISOString().split('T')[0];
@@ -319,8 +316,7 @@ function showSectorMenu(container,date){
         menu.appendChild(btn);
     });
     container.appendChild(menu);
-}<script>
-  <script>
+}
 // 문풀 섹터 생성 업데이트
 function createSectorBox(type){
     const box = document.createElement('div');
@@ -415,5 +411,4 @@ function createSectorBox(type){
     box.appendChild(content);
     return box;
 }
-</script>
 </script>
