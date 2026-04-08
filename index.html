@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Fake DM</title>
+<style>
+body { font-family: sans-serif; background:#fafafa; }
+#chat { max-width:400px; margin:20px auto; border:1px solid #ddd; padding:10px; height:500px; overflow-y:auto; background:white; }
+.msg { margin:5px 0; }
+.me { text-align:right; }
+.ai { text-align:left; color:blue; }
+#inputArea { max-width:400px; margin:10px auto; display:flex; }
+input { flex:1; padding:10px; }
+button { padding:10px; }
+#tasks { max-width:400px; margin:10px auto; }
+</style>
+</head>
+<body>
+
+<div id="tasks">
+  <h3>오늘 할 일</h3>
+  <label><input type="checkbox" class="task"> 공부</label><br>
+  <label><input type="checkbox" class="task"> 과제</label><br>
+  <label><input type="checkbox" class="task"> 운동</label><br>
+</div>
+
+<div id="chat"></div>
+
+<div id="inputArea">
+  <input id="msgInput" placeholder="메시지 입력">
+  <button onclick="sendMsg()">보내기</button>
+</div>
+
+<div style="text-align:center;">
+  <button onclick="generateReply()" id="replyBtn" disabled>답장 받기</button>
+</div>
+
+<script>
+let chat = document.getElementById("chat");
+
+function loadChat() {
+  let data = JSON.parse(localStorage.getItem("chat") || "[]");
+  chat.innerHTML = "";
+  data.forEach(m => {
+    let div = document.createElement("div");
+    div.className = "msg " + m.type;
+    div.innerText = m.text;
+    chat.appendChild(div);
+  });
+}
+loadChat();
+
+function saveMsg(text, type) {
+  let data = JSON.parse(localStorage.getItem("chat") || "[]");
+  data.push({text, type});
+  localStorage.setItem("chat", JSON.stringify(data));
+  loadChat();
+}
+
+function sendMsg() {
+  let input = document.getElementById("msgInput");
+  if (!input.value) return;
+  saveMsg(input.value, "me");
+  input.value = "";
+}
+
+document.querySelectorAll(".task").forEach(cb => {
+  cb.addEventListener("change", () => {
+    let allDone = [...document.querySelectorAll(".task")].every(c => c.checked);
+    document.getElementById("replyBtn").disabled = !allDone;
+  });
+});
+
+function generateReply() {
+  let replies = [
+    "ㅇㅇ 나중에 보자",
+    "지금 좀 바빠",
+    "왜?",
+    "ㅋㅋ",
+    "나중에 연락할게"
+  ];
+  let r = replies[Math.floor(Math.random()*replies.length)];
+  saveMsg(r, "ai");
+}
+</script>
+
+</body>
+</html>
