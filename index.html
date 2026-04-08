@@ -108,6 +108,10 @@ button {
 </div>
 
 <script>
+  document.addEventListener("DOMContentLoaded", () => {
+  let chat = document.getElementById("chat");
+  load();
+});
 let chat = document.getElementById("chat");
 
 function timeAgo(ts){
@@ -162,7 +166,10 @@ function sendMsg(){
   save(text,"me");
   input.value = "";
 
-  setTimeout(()=>reply(text), 1500);
+  function reply(userMsg){
+  let botMsg = generateReply(userMsg);
+  save(botMsg, "ai");
+}
 }
 function save(text,type){
   let data = JSON.parse(localStorage.getItem("chat")||"[]");
@@ -201,4 +208,4 @@ function generateReply(userMsg){
   let base = ["ㅇㅇ", "ㄴ", "왜", "ㅋㅋ"];
   return base[Math.floor(Math.random()*base.length)];
 }
-</html>
+
