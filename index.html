@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>(1) Instagram</title>
+<title>공부 플래너 DM</title>
 <style>
   body { margin:0; font-family:-apple-system; background:#fff; }
   .header {
@@ -11,8 +11,8 @@
     padding:10px 16px; border-bottom:1px solid #eee; background:#fff;
   }
   .header .name { font-weight:600; font-size:16px; color:#333; }
-  .header .add-today { font-weight:700; font-size:18px; color:#FFCBD9; cursor:pointer; }
-  
+  .header .add-today { font-weight:700; font-size:22px; color:#FFCBD9; cursor:pointer; }
+
   .chat { padding:10px; display:flex; flex-direction:column; }
 
   .daily-task-box {
@@ -21,8 +21,8 @@
   }
   .daily-date { color:#FFCBD9; font-size:20px; font-weight:700; margin-bottom:8px; }
   .add-sector-btn { font-weight:700; font-size:18px; color:#FFCBD9; border:none; background:none; cursor:pointer; }
-  
-  .sectors-container { margin-top:8px; }
+
+  .sectors-container { margin-top:8px; display:flex; flex-direction:column; }
 
   .sector-box {
     border-radius:12px; border:1px solid #FFCBD9; padding:8px; margin-top:10px; position:relative;
@@ -35,17 +35,15 @@
   .sector-content input[type="number"], .sector-content input[type="text"] {
     width:50px; padding:4px; margin-right:4px; border:1px solid #ccc; border-radius:4px;
   }
-
   .sector-divider { border:none; height:1px; background:#FFCBD9; margin-top:6px; }
 
   .progress-bar {
     width:100%; height:8px; border:1px solid #FFCBD9; border-radius:4px; background:#fff; margin-top:4px;
     position:relative;
   }
-  .progress-fill {
-    height:100%; background:#FFCBD9; border-radius:4px 0 0 4px; width:0%;
-  }
+  .progress-fill { height:100%; background:#FFCBD9; border-radius:4px 0 0 4px; width:0%; }
   .heart-btn { cursor:pointer; font-size:18px; color:#FFCBD9; font-weight:700; margin-left:8px; }
+
 </style>
 </head>
 <body>
@@ -60,7 +58,8 @@
 <script>
 const chat = document.getElementById('chat');
 const addTodayBtn = document.getElementById('addTodayBtn');
-const todayStr = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+const today = new Date();
+const todayStr = today.toISOString().split('T')[0]; // yyyy-mm-dd
 const DDAY = new Date('2026-11-19');
 
 function daysUntil(target){
@@ -68,12 +67,10 @@ function daysUntil(target){
   return Math.ceil(diff / (1000*60*60*24));
 }
 
-// 체크 저장용
+// 로컬스토리지 저장
 let tasksData = JSON.parse(localStorage.getItem('tasksData') || '{}');
 
-function saveData(){
-  localStorage.setItem('tasksData', JSON.stringify(tasksData));
-}
+function saveData(){ localStorage.setItem('tasksData', JSON.stringify(tasksData)); }
 
 function renderDailyTask(){
   chat.innerHTML = '';
@@ -89,6 +86,7 @@ function renderDailyTask(){
 function createDailyTaskBox(date){
   const box = document.createElement('div');
   box.className = 'daily-task-box';
+
   const dateDiv = document.createElement('div');
   dateDiv.className = 'daily-date';
   const ddayCount = daysUntil(DDAY);
@@ -104,11 +102,19 @@ function createDailyTaskBox(date){
   sectorsContainer.className = 'sectors-container';
   box.appendChild(sectorsContainer);
 
+  // 기존 섹터 복원
+  if(tasksData[date]){
+    tasksData[date].forEach(sec=>{
+      const secBox = createSectorBox(sec.type, sec.data);
+      sectorsContainer.appendChild(secBox);
+    });
+  }
+
   // 섹터 추가
   addSectorBtn.addEventListener('click', ()=>{
     const type = prompt('섹터 선택: video, concept, problem');
     if(!type) return;
-    const sectorBox = createSectorBox(type);
+    const sectorBox = createSectorBox(type, {});
     sectorsContainer.appendChild(sectorBox);
     if(!tasksData[date]) tasksData[date] = [];
     tasksData[date].push({type, data:{}});
@@ -118,7 +124,7 @@ function createDailyTaskBox(date){
   return box;
 }
 
-function createSectorBox(type){
+function createSectorBox(type, data){
   const box = document.createElement('div');
   box.className = 'sector-box';
 
@@ -132,7 +138,10 @@ function createSectorBox(type){
   const removeBtn = document.createElement('button');
   removeBtn.className = 'remove-sector';
   removeBtn.innerText = 'x';
-  removeBtn.addEventListener('click', ()=>box.remove());
+  removeBtn.addEventListener('click', ()=>{
+    box.remove();
+    // TODO: tasksData에서 제거
+  });
 
   header.appendChild(title);
   header.appendChild(removeBtn);
@@ -140,6 +149,7 @@ function createSectorBox(type){
 
   const content = document.createElement('div');
   content.className = 'sector-content';
+
   if(type==='video'){
     content.innerHTML = `
       <label>총 영상 길이:</label>
@@ -161,13 +171,15 @@ function createSectorBox(type){
       heart.innerText = '♥';
     });
   }
+
   if(type==='concept'){
     content.innerHTML = `
-      <label>개념 정리 완료</label>
+      <label>완료 체크</label>
       <input type="checkbox">
       <hr class="sector-divider">
     `;
   }
+
   if(type==='problem'){
     content.innerHTML = `
       <label>문제집 이름:</label>
