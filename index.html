@@ -293,88 +293,121 @@ function sendMsg(){
 sendBtn.onclick = sendMsg;
 
 /* ===== 플래너 ===== */
-const taskContainer = document.getElementById('taskContainer');
-const addTaskBtn = document.querySelector('.addTaskBtn');
-
-addTaskBtn.onclick = ()=>{
-  const box = document.createElement('div');
-  box.className='taskBox';
-
-  const date = new Date().toLocaleDateString();
-
-  box.innerHTML = `
-    <div class="taskDate">${date}</div>
-    <div class="line"></div>
-    <button onclick="addSector(this)">+ 섹터 추가</button>
-    <div class="sectorContainer"></div>
-  `;
-
-  taskContainer.appendChild(box);
-};
-
 function addSector(btn){
   const container = btn.nextElementSibling;
-  const type = prompt('1: 영상 / 2: 개념 / 3: 문풀');
 
-  const sec = document.createElement('div');
-  sec.className='sector';
+  // 이미 열려있으면 중복 방지
+  if(container.querySelector('.menu')) return;
 
-  /* 영상 */
-  if(type==='1'){
-    sec.innerHTML=`
-      영상 시청<br>
-      총: <input class="t">h <input class="t">m <input class="t">s<br>
-      현재: <input class="c">h <input class="c">m <input class="c">s
-      <div class="progressBar"><div class="progressFill"></div></div>
-      <span class="heart">♡</span>
-    `;
+  const menu = document.createElement('div');
+  menu.className = 'menu';
 
-    const inputs = sec.querySelectorAll('input');
-    const fill = sec.querySelector('.progressFill');
+  const list = [
+    {name:'영상 시청', type:'video'},
+    {name:'개념 정리', type:'concept'},
+    {name:'문풀', type:'problem'}
+  ];
 
-    inputs.forEach(i=>{
-      i.oninput=()=>{
-        let t = (inputs[0].value*3600||0)+(inputs[1].value*60||0)+(inputs[2].value||0);
-        let c = (inputs[3].value*3600||0)+(inputs[4].value*60||0)+(inputs[5].value||0);
-        if(t>0) fill.style.width=(c/t*100)+'%';
-      };
-    });
+  list.forEach(item=>{
+    const b = document.createElement('button');
+    b.innerText = item.name;
 
-    sec.querySelector('.heart').onclick=()=>sec.querySelector('.heart').innerText='♥';
-  }
+    b.onclick = ()=>{
+      const sec = document.createElement('div');
+      sec.className='sector';
 
-  /* 개념 */
-  if(type==='2'){
-    sec.innerHTML=`개념 정리 <input type="checkbox">`;
-  }
+      // ===== 영상 =====
+      if(item.type==='video'){
+        sec.innerHTML = `
+          <div style="font-weight:700;">영상 시청</div>
 
-  /* 문풀 (디테일 완성) */
-  if(type==='3'){
-    sec.innerHTML=`
-      문풀<br>
-      <input class="total" placeholder="총량 (예: 30)">
-      <input class="done" placeholder="현재 푼 수">
-      <div class="progressBar"><div class="progressFill"></div></div>
-      <span class="heart">♡</span>
-    `;
+          <div style="font-size:12px;color:#FFCBD9;">총 길이</div>
+          <input class="t_h" type="number" placeholder="시">
+          <input class="t_m" type="number" placeholder="분">
+          <input class="t_s" type="number" placeholder="초">
 
-    const total = sec.querySelector('.total');
-    const done = sec.querySelector('.done');
-    const fill = sec.querySelector('.progressFill');
+          <br>
 
-    function update(){
-      let t = parseInt(total.value)||0;
-      let d = parseInt(done.value)||0;
-      if(t>0) fill.style.width=(d/t*100)+'%';
-    }
+          <div style="font-size:12px;color:#FFCBD9;">현재 시청</div>
+          <input class="c_h" type="number" placeholder="시">
+          <input class="c_m" type="number" placeholder="분">
+          <input class="c_s" type="number" placeholder="초">
 
-    total.oninput = update;
-    done.oninput = update;
+          <div style="height:8px;border:1px solid #FFCBD9;margin-top:5px;">
+            <div class="bar" style="height:100%;width:0%;background:#FFCBD9;"></div>
+          </div>
 
-    sec.querySelector('.heart').onclick=()=>sec.querySelector('.heart').innerText='♥';
-  }
+          <span class="heart">♡</span>
+        `;
 
-  container.appendChild(sec);
+        const t_h = sec.querySelector('.t_h');
+        const t_m = sec.querySelector('.t_m');
+        const t_s = sec.querySelector('.t_s');
+
+        const c_h = sec.querySelector('.c_h');
+        const c_m = sec.querySelector('.c_m');
+        const c_s = sec.querySelector('.c_s');
+
+        const bar = sec.querySelector('.bar');
+        const heart = sec.querySelector('.heart');
+
+        function update(){
+          const total =
+            (Number(t_h.value)||0)*3600 +
+            (Number(t_m.value)||0)*60 +
+            (Number(t_s.value)||0);
+
+          const current =
+            (Number(c_h.value)||0)*3600 +
+            (Number(c_m.value)||0)*60 +
+            (Number(c_s.value)||0);
+
+          if(total>0){
+            let percent = Math.min(100, (current/total)*100);
+            bar.style.width = percent + '%';
+
+            if(percent===100){
+              heart.innerText='♥';
+            }
+          }
+        }
+
+        [t_h,t_m,t_s,c_h,c_m,c_s].forEach(i=>{
+          i.addEventListener('input', update);
+        });
+      }
+
+      // ===== 개념 =====
+      if(item.type==='concept'){
+        sec.innerHTML = `
+          <input type="text" placeholder="개념 입력">
+          <input type="checkbox">
+        `;
+      }
+
+      // ===== 문풀 =====
+      if(item.type==='problem'){
+        sec.innerHTML = `
+          <input type="text" placeholder="문제집 이름">
+          <br>
+          <input type="text" placeholder="범위">
+          <span class="heart">♡</span>
+        `;
+
+        const heart = sec.querySelector('.heart');
+        heart.onclick = ()=>{
+          heart.innerText = heart.innerText==='♡' ? '♥' : '♡';
+        };
+      }
+
+      container.appendChild(sec);
+      menu.remove();
+    };
+
+    menu.appendChild(b);
+  });
+
+  container.appendChild(menu);
 }
 
 /* 시작 */
